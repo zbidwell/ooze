@@ -1,0 +1,9 @@
+[package]
+name = "ooze"
+version = "0.1.0"
+authors = ["zbidwell <ZBidwell@pacificinsight.com>"]
+edition = "2018"
+
+[dependencies]
+glium = "*"
+rand = "*"
