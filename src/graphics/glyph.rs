@@ -1,6 +1,7 @@
 use glium;
+use glium::backend::glutin::Display;
 
-use crate::graphics::{term_to_screen, Dimensions};
+use crate::graphics::{term_to_screen, Dimensions, Sprite};
 
 pub struct Glyph {
     pub location: [usize; 2],

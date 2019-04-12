@@ -59,22 +59,4 @@ pub fn term_to_screen(location: [usize; 2], term_width: usize, term_height: usiz
     ]
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::graphics::Terminal;
-//     #[test]
-//     fn term_to_screen() {
-//         let t = Terminal::new(3, 2, 5, 4);
-
-//         let input: [usize; 2] = [3, 2];
-//         let expected: [f32; 2] = [0.1, 0.0];
-
-//         assert_eq!(t.term_to_screen([0, 0]), [-1.0, -1.0]);
-//         assert_eq!(t.term_to_screen([5, 0]), [1.0, -1.0]);
-//         assert_eq!(t.term_to_screen([0, 4]), [-1.0, 1.0]);
-//         assert_eq!(t.term_to_screen([5, 4]), [1.0, 1.0]);
-//         assert_eq!(t.term_to_screen(input), expected);
-//     }
-// }
-
 
