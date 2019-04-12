@@ -1,66 +1,36 @@
 use glium;
-use glium::Frame;
-use glium::Surface;
-use glium::backend::glutin::Display;
 
-use crate::graphics::{Drawable, Terminal};
-use crate::app::App;
+use crate::graphics::{term_to_screen, Dimensions};
 
-#[derive(PartialEq, Debug)]
 pub struct Glyph {
     pub location: [usize; 2],
-    pub width: usize,
-    pub height: usize,
+    
+    pub dims: Dimensions,
 
     pub color: [f32; 4],
+    pub vertices: [Vertex; 4],
 }
 
 impl Glyph {
-    pub fn new(color: [f32; 4], location: [usize; 2], width: usize, height:usize) -> Glyph {
+    pub fn new(color: [f32; 4], location: [usize; 2], dims: Dimensions) -> Glyph {
         Glyph {
             location,
-            width,
-            height,
-            color
+            dims,
+            color,
+            vertices: {
+                let tl = term_to_screen([location[0], location[1] + 1], dims.term_width, dims.term_height);
+                let tr = term_to_screen([location[0] + 1, location[1] + 1], dims.term_width, dims.term_height);
+                let bl = term_to_screen([location[0], location[1]], dims.term_width, dims.term_height);
+                let br = term_to_screen([location[0] + 1, location[1]], dims.term_width, dims.term_height);
+
+                [
+                    Vertex{position: tl},
+                    Vertex{position: tr},
+                    Vertex{position: bl},
+                    Vertex{position: br},
+                ]
+            },
         }
-    }
-
-    pub fn empty_glyph(location: [usize; 2], width: usize, height:usize) -> Glyph {
-        Glyph {
-            location,
-            width,
-            height,
-            color: [0.0, 0.0, 0.0, 1.0],
-        }
-    }
-}
-
-impl Drawable for Glyph {
-    fn draw(&self, target: &mut Frame, display: &Display, terminal: &Terminal) {
-        let tl = terminal.term_to_screen([self.location[0], self.location[1] + 1]);
-        let tr = terminal.term_to_screen([self.location[0] + 1, self.location[1] + 1]);
-        let bl = terminal.term_to_screen([self.location[0], self.location[1]]);
-        let br = terminal.term_to_screen([self.location[0] + 1, self.location[1]]);
-
-        let vertices = [
-            Vertex{position: tl},
-            Vertex{position: tr},
-            Vertex{position: bl},
-            Vertex{position: br},
-        ];
-
-        let v_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
-
-        let program = 
-            glium::Program::from_source(display, V_SHADER, F_SHADER, None).unwrap();
-
-        target.draw(
-            &v_buffer,
-            glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
-            &program,
-            &glium::uniform!{quad_color: self.color},
-            &glium::DrawParameters::default()
-        ).unwrap();
     }
 }
 

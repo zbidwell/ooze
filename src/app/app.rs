@@ -4,34 +4,39 @@ use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::Drawable;
+use crate::graphics::{Drawable, Dimensions, F_SHADER, V_SHADER};
 use crate::graphics::Terminal;
 
 pub struct App {
     pub events_loop: glutin::EventsLoop,
     pub display: glium::Display,
+    pub program: glium::Program,
 
     pub terminal: Terminal,
 }
 
 impl App {
-    pub fn new(
-        glyph_width: usize,
-        glyph_height: usize,
-        term_width: usize,
-        term_height: usize,
-        title: &str,
-    ) -> App {
+    pub fn new(dims: Dimensions, title: &str) -> App {
         let (events_loop, display) =
-            init_window(glyph_width * term_width, glyph_height * term_height, title);
+            init_window(
+                dims.glyph_width * dims.term_width,
+                dims.glyph_height * dims.term_height,
+                title
+            );
 
-        let terminal = Terminal::new(glyph_width, glyph_height, term_width, term_height);
+        let terminal = Terminal::new(dims);
+        let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
 
         App {
             events_loop,
             display,
+            program,
             terminal,
         }
+    }
+
+    fn update(&mut self) {
+        self.terminal.root_pane.fill_with_random();
     }
 
     fn draw(&self) {
@@ -39,7 +44,7 @@ impl App {
 
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        self.terminal.draw(&mut target, &self.display, &self.terminal);
+        self.terminal.draw(&mut target, &self.display, &self.program);
 
         target.finish().expect("Failed to flip buffers");
     }
@@ -56,6 +61,8 @@ impl App {
                 },
                 _ => (),
             });
+
+            self.update();
 
             // clear and flip the window
             self.draw();
