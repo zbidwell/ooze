@@ -7,7 +7,7 @@ use glium::Display;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct SpriteId {
-    pub id: usize,
+    pub id: &'static str,
 }
 
 pub struct Sprite {

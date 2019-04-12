@@ -26,7 +26,7 @@ impl Pane {
                         outer[x as usize].push(Glyph::new(
                             [0.0, 0.0, 0.0, 1.0],
                             [0.0, 0.0, 0.0, 1.0],
-                            SpriteId{id:0},
+                            SpriteId{id:"empty"},
                             [x, y],
                             dims
                         ));
@@ -50,7 +50,7 @@ impl Pane {
                 self.contents[x as usize][y as usize] = Glyph::new(
                     fg_color,
                     bg_color,
-                    SpriteId{id:0},
+                    SpriteId{id:"a"},
                     [x, y],
                     self.dims
                 );

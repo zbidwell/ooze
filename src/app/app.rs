@@ -30,7 +30,8 @@ impl App {
         let terminal = Terminal::new(dims);
         let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
         let mut sprites = HashMap::new();
-        sprites.insert(SpriteId{id:0}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\a.png"#, &display));
+        sprites.insert(SpriteId{id:"empty"}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\empty.png"#, &display));
+        sprites.insert(SpriteId{id:"a"}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\a.png"#, &display));
 
         App {
             events_loop,
