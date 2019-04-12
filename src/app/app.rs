@@ -1,10 +1,11 @@
 use std::time::Instant;
+use std::collections::HashMap;
 
 use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Drawable, Dimensions, F_SHADER, V_SHADER};
+use crate::graphics::{Drawable, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteId};
 use crate::graphics::Terminal;
 
 pub struct App {
@@ -13,6 +14,8 @@ pub struct App {
     pub program: glium::Program,
 
     pub terminal: Terminal,
+
+    pub sprites: HashMap<SpriteId, Sprite>,
 }
 
 impl App {
@@ -26,17 +29,20 @@ impl App {
 
         let terminal = Terminal::new(dims);
         let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
+        let mut sprites = HashMap::new();
+        sprites.insert(SpriteId{id:0}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\a.png"#, &display));
 
         App {
             events_loop,
             display,
             program,
             terminal,
+            sprites,
         }
     }
 
     fn update(&mut self) {
-        self.terminal.root_pane.fill_with_random();
+        //self.terminal.root_pane.fill_with_random();
     }
 
     fn draw(&self) {
@@ -44,7 +50,7 @@ impl App {
 
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        self.terminal.draw(&mut target, &self.display, &self.program);
+        self.terminal.draw(&mut target, &self.display, &self.program, &self.sprites);
 
         target.finish().expect("Failed to flip buffers");
     }

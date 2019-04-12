@@ -1,4 +1,5 @@
-use crate::graphics::{Drawable, Terminal, Glyph, V_SHADER, F_SHADER, Vertex, Dimensions};
+use std::collections::HashMap;
+use crate::graphics::{Drawable, Terminal, Glyph, V_SHADER, F_SHADER, Vertex, Dimensions, SpriteId, Sprite};
 use glium::{Frame, Surface, Program};
 use glium::backend::glutin::Display;
 
@@ -24,6 +25,7 @@ impl Pane {
                     for y in 0..dims.term_height {
                         outer[x as usize].push(Glyph::new(
                             [0.0, 0.0, 0.0, 1.0],
+                            SpriteId{id:0},
                             [x, y],
                             dims
                         ));
@@ -45,6 +47,7 @@ impl Pane {
                 let color = [rand::random(), rand::random(), rand::random(), 1.0];
                 self.contents[x as usize][y as usize] = Glyph::new(
                     color,
+                    SpriteId{id:0},
                     [x, y],
                     self.dims
                 );
@@ -64,21 +67,24 @@ impl Pane {
 }
 
 impl Drawable for Pane {
-    fn draw(&self, target: &mut Frame, display: &Display, program: &Program) {
+    fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &HashMap<SpriteId, Sprite>) {
         // draw all glyphs in pane
         for glyph in self.glyphs() {
+            // draw background
             target.draw(
                 &glium::VertexBuffer::new(display, &glyph.vertices).unwrap(),
                 glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
                 program,
-                &glium::uniform!{quad_color: glyph.color},
+                &glium::uniform!{quad_color: glyph.color, tex: &sprites.get(&glyph.sprite_id).unwrap().texture},
                 &glium::DrawParameters::default()
             ).unwrap();
+            // draw sprite
+            {};
         }
 
         // draw all sub-panes too
         for pane in &self.sub_panes {
-            pane.draw(target, display, program);
+            pane.draw(target, display, program, sprites);
         }
     }
 }

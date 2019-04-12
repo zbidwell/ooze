@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use crate::graphics::Drawable;
-use crate::graphics::Pane;
+use crate::graphics::{Pane, Sprite, SpriteId};
 use glium::{Frame, Program};
 use glium::backend::glutin::Display;
 
@@ -47,8 +48,8 @@ impl Terminal {
 }
 
 impl Drawable for Terminal {
-    fn draw(&self, target: &mut Frame, display: &Display, program: &Program) {
-        self.root_pane.draw(target, display, program);
+    fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &HashMap<SpriteId, Sprite>) {
+        self.root_pane.draw(target, display, program, sprites);
     }
 }
 
