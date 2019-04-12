@@ -50,16 +50,9 @@ impl Drawable for Glyph {
         ];
 
         let v_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
-        let index_arr: [u16; 4] = [0, 1, 2, 3];
-        let indices = 
-            glium::IndexBuffer::new(
-                display,
-                glium::index::PrimitiveType::TriangleStrip,
-                &index_arr,
-            ).unwrap();
 
         let program = 
-            glium::Program::from_source(display, default_v_shader, default_f_shader, None).unwrap();
+            glium::Program::from_source(display, V_SHADER, F_SHADER, None).unwrap();
 
         target.draw(
             &v_buffer,
@@ -72,12 +65,12 @@ impl Drawable for Glyph {
 }
 
 #[derive(Copy, Clone)]
-struct Vertex {
-    position: [f32; 2],
+pub struct Vertex {
+    pub position: [f32; 2],
 }
 glium::implement_vertex!(Vertex, position);
 
-const default_v_shader: &str = r#"
+pub const V_SHADER: &str = r#"
     #version 140
             in vec2 position;
 
@@ -86,7 +79,7 @@ const default_v_shader: &str = r#"
             }
 "#;
 
-const default_f_shader: &str = r#"
+pub const F_SHADER: &str = r#"
     #version 140
             out vec4 color;
 

@@ -7,10 +7,7 @@ fn main() {
 
     let mut a = App::new(16, 16, 32, 32, "Ooze");
 
-    let mut p = Pane::new(6, 6, 32, 32);
-    p.fill_with_random();
-
-    a.terminal.root_pane.add_sub_pane(p);
+    a.terminal.root_pane.fill_with_random();
 
     a.run();
 }

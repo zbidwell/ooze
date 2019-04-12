@@ -1,5 +1,5 @@
-use crate::graphics::{Drawable, Terminal, Glyph};
-use glium::Frame;
+use crate::graphics::{Drawable, Terminal, Glyph, V_SHADER, F_SHADER, Vertex};
+use glium::{Frame, Surface};
 use glium::backend::glutin::Display;
 
 use rand;
@@ -75,8 +75,31 @@ impl Pane {
 impl Drawable for Pane {
     fn draw(&self, target: &mut Frame, display: &Display, terminal: &Terminal) {
         // draw all glyphs in pane
+        let program = 
+                glium::Program::from_source(display, V_SHADER, F_SHADER, None).unwrap();
         for glyph in self.glyphs() {
-            glyph.draw(target, display, terminal);
+            //glyph.draw(target, display, terminal);
+            let tl = terminal.term_to_screen([glyph.location[0], glyph.location[1] + 1]);
+            let tr = terminal.term_to_screen([glyph.location[0] + 1, glyph.location[1] + 1]);
+            let bl = terminal.term_to_screen([glyph.location[0], glyph.location[1]]);
+            let br = terminal.term_to_screen([glyph.location[0] + 1, glyph.location[1]]);
+
+            let vertices = [
+                Vertex{position: tl},
+                Vertex{position: tr},
+                Vertex{position: bl},
+                Vertex{position: br},
+            ];
+
+            let v_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
+
+            target.draw(
+                &v_buffer,
+                glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
+                &program,
+                &glium::uniform!{quad_color: glyph.color},
+                &glium::DrawParameters::default()
+            ).unwrap();
         }
 
         // draw all sub-panes too
