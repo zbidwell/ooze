@@ -42,7 +42,7 @@ impl App {
     }
 
     fn update(&mut self) {
-        //self.terminal.root_pane.fill_with_random();
+        self.terminal.root_pane.fill_with_random();
     }
 
     fn draw(&self) {

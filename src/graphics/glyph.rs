@@ -8,17 +8,19 @@ pub struct Glyph {
     
     pub dims: Dimensions,
 
-    pub color: [f32; 4],
+    pub fg_color: [f32; 4],
+    pub bg_color: [f32; 4],
     pub vertices: [Vertex; 4],
     pub sprite_id: SpriteId,
 }
 
 impl Glyph {
-    pub fn new(color: [f32; 4], sprite_id: SpriteId, location: [usize; 2], dims: Dimensions) -> Glyph {
+    pub fn new(fg_color: [f32; 4], bg_color: [f32; 4], sprite_id: SpriteId, location: [usize; 2], dims: Dimensions) -> Glyph {
         Glyph {
             location,
             dims,
-            color,
+            fg_color,
+            bg_color,
             vertices: {
                 let tl = term_to_screen([location[0], location[1] + 1], dims.term_width, dims.term_height);
                 let tr = term_to_screen([location[0] + 1, location[1] + 1], dims.term_width, dims.term_height);
@@ -63,10 +65,15 @@ pub const F_SHADER: &str = r#"
 
             out vec4 color;
 
-            uniform vec4 quad_color;
+            uniform vec4 bg_color;
+            uniform vec4 fg_color;
             uniform sampler2D tex;
 
             void main() {
-                color = texture(tex, v_tex_coords);
+                if (texture(tex, v_tex_coords).a < 0.5) {
+                    color = bg_color;
+                } else {
+                    color = fg_color;
+                }
             }
 "#;

@@ -2,7 +2,7 @@ use image;
 use std::io::BufReader;
 use std::fs::File;
 use glium::texture::RawImage2d;
-use glium::texture::CompressedSrgbTexture2d;
+use glium::texture::Texture2d;
 use glium::Display;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -11,7 +11,7 @@ pub struct SpriteId {
 }
 
 pub struct Sprite {
-    pub texture: CompressedSrgbTexture2d,
+    pub texture: Texture2d,
 }
 
 impl Sprite {
@@ -20,15 +20,9 @@ impl Sprite {
         let image = image::load(r, image::PNG).unwrap().to_rgba();
         let image_dimensions = image.dimensions();
         let image = RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-        // let image = image::load(Cursor::new(&include_bytes!("../res/a.png")[..]),
-        //                         image::PNG).unwrap().to_rgba();
-        // let image_dimensions = image.dimensions();
-        // let image = RawImage2d::from_raw_rgb_reversed(&image.into_raw(), image_dimensions);
-
-        // println!("{:?}", image);
 
         Sprite {
-            texture: CompressedSrgbTexture2d::new(display, image).unwrap()
+            texture: Texture2d::new(display, image).unwrap()
         }
     }
 }

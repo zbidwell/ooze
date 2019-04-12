@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::graphics::{Drawable, Terminal, Glyph, V_SHADER, F_SHADER, Vertex, Dimensions, SpriteId, Sprite};
-use glium::{Frame, Surface, Program};
+use glium::{Frame, Surface, Program, Blend};
 use glium::backend::glutin::Display;
 
 use rand;
@@ -25,6 +25,7 @@ impl Pane {
                     for y in 0..dims.term_height {
                         outer[x as usize].push(Glyph::new(
                             [0.0, 0.0, 0.0, 1.0],
+                            [0.0, 0.0, 0.0, 1.0],
                             SpriteId{id:0},
                             [x, y],
                             dims
@@ -44,9 +45,11 @@ impl Pane {
     pub fn fill_with_random(&mut self) {
         for x in 0..self.dims.term_width {
             for y in 0..self.dims.term_height {
-                let color = [rand::random(), rand::random(), rand::random(), 1.0];
+                let fg_color = [rand::random(), rand::random(), rand::random(), 1.0];
+                let bg_color = [rand::random(), rand::random(), rand::random(), 1.0];
                 self.contents[x as usize][y as usize] = Glyph::new(
-                    color,
+                    fg_color,
+                    bg_color,
                     SpriteId{id:0},
                     [x, y],
                     self.dims
@@ -69,14 +72,19 @@ impl Pane {
 impl Drawable for Pane {
     fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &HashMap<SpriteId, Sprite>) {
         // draw all glyphs in pane
+        let params = glium::DrawParameters {
+            blend: Blend::alpha_blending(),
+            .. Default::default()
+        };
+
         for glyph in self.glyphs() {
             // draw background
             target.draw(
                 &glium::VertexBuffer::new(display, &glyph.vertices).unwrap(),
                 glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
                 program,
-                &glium::uniform!{quad_color: glyph.color, tex: &sprites.get(&glyph.sprite_id).unwrap().texture},
-                &glium::DrawParameters::default()
+                &glium::uniform!{bg_color: glyph.bg_color, fg_color: glyph.fg_color, tex: &sprites.get(&glyph.sprite_id).unwrap().texture},
+                &params,
             ).unwrap();
             // draw sprite
             {};
