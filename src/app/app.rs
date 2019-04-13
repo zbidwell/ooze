@@ -15,6 +15,8 @@ pub struct App {
     pub terminal: Terminal,
 
     pub sprites: HashMap<SpriteId, Sprite>,
+
+    pub update_callback: fn(&mut App) -> (),
 }
 
 impl App {
@@ -38,11 +40,13 @@ impl App {
             program,
             terminal,
             sprites,
+            update_callback: default_update_callback,
         }
     }
 
+
     fn update(&mut self) {
-        //self.terminal.root_pane.fill_with_random();
+        (self.update_callback)(self);
     }
 
     fn draw(&self) {
@@ -75,6 +79,10 @@ impl App {
             println!("{:?}", start.elapsed())
         }
     }
+}
+
+fn default_update_callback(app: &mut App) {
+
 }
 
 // Create an event loop and context

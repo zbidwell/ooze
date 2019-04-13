@@ -19,5 +19,11 @@ fn main() {
     a.terminal.root_pane.add_sub_pane_with(pane_dims);
     a.terminal.root_pane.sub_panes[0].fill_with_random();
 
+    a.update_callback = test_update;
+
     a.run();
+}
+
+fn test_update(app: &mut App) {
+    app.terminal.root_pane.sub_panes[0].fill_with_random();
 }
