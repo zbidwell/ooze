@@ -5,8 +5,7 @@ use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Drawable, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteId};
-use crate::graphics::Terminal;
+use crate::graphics::{Terminal, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteId};
 
 pub struct App {
     pub events_loop: glutin::EventsLoop,
@@ -22,8 +21,8 @@ impl App {
     pub fn new(dims: Dimensions, title: &str) -> App {
         let (events_loop, display) =
             init_window(
-                dims.glyph_width * dims.term_width,
-                dims.glyph_height * dims.term_height,
+                dims.glyph_size.x * dims.term_size.x,
+                dims.glyph_size.y * dims.term_size.y,
                 title
             );
 
@@ -43,7 +42,7 @@ impl App {
     }
 
     fn update(&mut self) {
-        self.terminal.root_pane.fill_with_random();
+        //self.terminal.root_pane.fill_with_random();
     }
 
     fn draw(&self) {
