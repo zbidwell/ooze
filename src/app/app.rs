@@ -76,7 +76,7 @@ impl App {
 
             // clear and flip the window
             self.draw();
-            println!("{:?}", start.elapsed())
+            //println!("{:?}", start.elapsed())
         }
     }
 }
