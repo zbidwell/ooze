@@ -19,11 +19,18 @@ fn main() {
     a.terminal.root_pane.add_sub_pane_with(pane_dims);
     a.terminal.root_pane.sub_panes[0].fill_with_random();
 
+    let pane_dims = Dimensions::new(
+        Point::new(8, 8),
+        Point::new(6, 6),
+        Point::new(-1, -1),
+    );
+    a.terminal.root_pane.sub_panes[0].add_sub_pane_with(pane_dims);
+
     a.update_callback = test_update;
 
     a.run();
 }
 
 fn test_update(app: &mut App) {
-    app.terminal.root_pane.sub_panes[0].fill_with_random();
+    app.terminal.root_pane.sub_panes[0].sub_panes[0].fill_with_random();
 }

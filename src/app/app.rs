@@ -23,8 +23,8 @@ impl App {
     pub fn new(dims: Dimensions, title: &str) -> App {
         let (events_loop, display) =
             init_window(
-                dims.glyph_size.x * dims.term_size.x,
-                dims.glyph_size.y * dims.term_size.y,
+                (dims.glyph_size.x * dims.term_size.x) as usize,
+                (dims.glyph_size.y * dims.term_size.y) as usize,
                 title
             );
 

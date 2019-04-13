@@ -17,5 +17,10 @@ impl Glyph {
             sprite_id,
         }
     }
+
+    // use by drawing functions to see if this hides lower glyphs
+    pub fn is_opaque(&self) -> bool {
+        self.bg_color[3] == 1.0
+    }
 }
 
