@@ -2,7 +2,7 @@
 
 A psuedo-console for roguelike development
 
-```
+```rust
 use std::time::Duration;
 
 use ooze;
