@@ -2,6 +2,8 @@
 
 A psuedo-console for roguelike development
 
+![Example Gif](https://github.com/zbidwell/Ooze/resources/example.gif)
+
 ```rust
 use std::time::Duration;
 
