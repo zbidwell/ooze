@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::time::{Instant, Duration};
 use std::collections::HashMap;
 
 use glium;
@@ -16,15 +16,15 @@ pub struct App {
 
     pub sprites: HashMap<SpriteId, Sprite>,
 
-    pub update_callback: fn(&mut App) -> (),
+    pub update_callback: fn(&mut App, Duration) -> (),
 }
 
 impl App {
-    pub fn new(dims: Dimensions, title: &str) -> App {
+    pub fn new(dims: Dimensions, scale: f32, title: &str) -> App {
         let (events_loop, display) =
             init_window(
-                (dims.glyph_size.x * dims.term_size.x) as usize,
-                (dims.glyph_size.y * dims.term_size.y) as usize,
+                (dims.glyph_size.x as f32 * dims.term_size.x as f32 * scale) as usize,
+                (dims.glyph_size.y as f32 * dims.term_size.y as f32 * scale) as usize,
                 title
             );
 
@@ -45,8 +45,8 @@ impl App {
     }
 
 
-    fn update(&mut self) {
-        (self.update_callback)(self);
+    fn update(&mut self, dt: Duration) {
+        (self.update_callback)(self, dt);
     }
 
     fn draw(&self) {
@@ -61,8 +61,13 @@ impl App {
 
     pub fn run(&mut self) {
         let mut closed = false;
+        let mut start = Instant::now();
         while !closed {
-            let start = Instant::now();
+            
+
+            // clear, draw the terminal, and flip the window
+            self.draw();
+
             // Handle all window events
             self.events_loop.poll_events(|ev| match ev {
                 glutin::Event::WindowEvent { event, .. } => match event {
@@ -72,16 +77,16 @@ impl App {
                 _ => (),
             });
 
-            self.update();
+            self.update(start.elapsed());
 
-            // clear and flip the window
-            self.draw();
+            start = Instant::now();
+
             //println!("{:?}", start.elapsed())
         }
     }
 }
 
-fn default_update_callback(app: &mut App) {
+fn default_update_callback(app: &mut App, dt: Duration) {
 
 }
 

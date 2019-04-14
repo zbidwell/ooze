@@ -3,6 +3,7 @@ use std::io::BufReader;
 use std::fs::File;
 use glium::texture::RawImage2d;
 use glium::texture::Texture2d;
+use glium::uniforms::Sampler;
 use glium::Display;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]

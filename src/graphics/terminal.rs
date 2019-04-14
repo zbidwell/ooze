@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use crate::graphics::{Pane, Sprite, SpriteId, Dimensions, Glyph, Point};
 use glium::{Frame, Program, Surface, Blend};
 use glium::backend::glutin::Display;
-
-
+use glium::uniforms::Sampler;
+use glium::uniforms::MagnifySamplerFilter::Nearest;
 
 pub struct Terminal {
     pub dims: Dimensions,
@@ -12,9 +12,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn new(
-        dims: Dimensions,
-    ) -> Terminal {
+    pub fn new(dims: Dimensions) -> Terminal {
         Terminal {
             dims,
             root_pane: Pane::new(dims),
@@ -30,11 +28,19 @@ impl Terminal {
         };
 
         for (glyph, point, layer) in glyph_tuples {
+            let texture = &sprites.get(&glyph.sprite_id).unwrap().texture;
+
+            let uniforms = glium::uniform! {
+                bg_color: glyph.bg_color,
+                fg_color: glyph.fg_color,
+                tex: Sampler::new(texture).magnify_filter(Nearest)
+            };
+
             target.draw(
                 &glium::VertexBuffer::new(display, &point.screen_verts(self.dims)).unwrap(),
                 glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
                 program,
-                &glium::uniform!{bg_color: glyph.bg_color, fg_color: glyph.fg_color, tex: &sprites.get(&glyph.sprite_id).unwrap().texture},
+                &uniforms,
                 &params,
             ).unwrap();
         }

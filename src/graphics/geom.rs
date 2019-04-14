@@ -8,10 +8,7 @@ pub struct Point {
 
 impl Point {
     pub fn new(x: i32, y: i32) -> Point {
-        Point {
-            x,
-            y,
-        }
+        Point { x, y }
     }
 
     // vertices as tl, tr, bl, br with self as bottom left
