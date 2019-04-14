@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::graphics::{Pane, Sprite, SpriteId, Dimensions, Glyph, Point};
+use crate::graphics::{Pane, Sprite, Dimensions, Glyph, Point, SpriteMap};
 use glium::{Frame, Program, Surface, Blend};
 use glium::backend::glutin::Display;
 use glium::uniforms::Sampler;
@@ -19,7 +19,7 @@ impl Terminal {
         }
     }
 
-    pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &HashMap<SpriteId, Sprite>) {
+    pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &SpriteMap) {
         let glyph_tuples = self.collect_drawable_glyphs();
 
         let params = glium::DrawParameters {
@@ -28,7 +28,7 @@ impl Terminal {
         };
 
         for (glyph, point, layer) in glyph_tuples {
-            let texture = &sprites.get(&glyph.sprite_id).unwrap().texture;
+            let texture = &sprites.get(&glyph.sprite_id).texture;
 
             let uniforms = glium::uniform! {
                 bg_color: glyph.bg_color,

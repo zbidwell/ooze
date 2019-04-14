@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::graphics::{Terminal, Glyph, V_SHADER, F_SHADER, Vertex, Dimensions, SpriteId, Sprite, Point};
+use crate::graphics::{Terminal, Glyph, V_SHADER, F_SHADER, Vertex, Dimensions, Sprite, Point};
 use glium::{Frame, Surface, Program, Blend};
 use glium::backend::glutin::Display;
 
@@ -30,9 +30,9 @@ impl Pane {
                     for y in 0..dims.term_size.y {
                         outer[x as usize].push(Glyph::new(
                             Point::new(x, y),
+                            [1.0, 1.0, 1.0, 1.0],
                             [0.0, 0.0, 0.0, 1.0],
-                            [0.0, 0.0, 0.0, 1.0],
-                            SpriteId{id:"empty"}
+                            "empty".to_string(),
                         ));
                     }
                 }
@@ -75,7 +75,7 @@ impl Pane {
                     Point::new(x, y),
                     fg_color,
                     bg_color,
-                    SpriteId{id:"a"}
+                    "@".to_string(),
                 );
             }
         }

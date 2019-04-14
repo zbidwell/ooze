@@ -1,11 +1,12 @@
 use std::time::{Instant, Duration};
 use std::collections::HashMap;
+use std::path::Path;
 
 use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Terminal, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteId};
+use crate::graphics::{Terminal, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteMap};
 
 pub struct App {
     pub events_loop: glutin::EventsLoop,
@@ -14,7 +15,7 @@ pub struct App {
 
     pub terminal: Terminal,
 
-    pub sprites: HashMap<SpriteId, Sprite>,
+    pub sprites: SpriteMap,
 
     pub update_callback: fn(&mut App, Duration) -> (),
 }
@@ -30,9 +31,7 @@ impl App {
 
         let terminal = Terminal::new(dims);
         let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
-        let mut sprites = HashMap::new();
-        sprites.insert(SpriteId{id:"empty"}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\empty.png"#, &display));
-        sprites.insert(SpriteId{id:"a"}, Sprite::new(r#"C:\RustProjects\Ooze\src\res\a.png"#, &display));
+        let sprites = SpriteMap::from_sheet(&display, &Path::new(r#"resources\sheets\test_sheet.png"#), &Path::new(r#"resources\sheets\test_sheet.xml"#));
 
         App {
             events_loop,
@@ -63,8 +62,6 @@ impl App {
         let mut closed = false;
         let mut start = Instant::now();
         while !closed {
-            
-
             // clear, draw the terminal, and flip the window
             self.draw();
 
