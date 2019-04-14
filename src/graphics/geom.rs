@@ -51,4 +51,22 @@ impl Dimensions {
             offset,
         }
     }
+
+    pub fn with_glyph_size(&self, glyph_size: Point) -> Dimensions {
+        let mut new = self.clone();
+        new.glyph_size = glyph_size;
+        new
+    }
+
+    pub fn with_term_size(&self, term_size: Point) -> Dimensions {
+        let mut new = self.clone();
+        new.term_size = term_size;
+        new
+    }
+
+    pub fn with_offset(&self, offset: Point) -> Dimensions {
+        let mut new = self.clone();
+        new.offset = offset;
+        new
+    }
 }
