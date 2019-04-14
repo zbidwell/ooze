@@ -1,5 +1,6 @@
 pub mod app;
 pub mod graphics;
+pub mod terminal;
 
 #[cfg(test)]
 mod tests {

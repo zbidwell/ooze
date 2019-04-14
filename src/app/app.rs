@@ -6,7 +6,8 @@ use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Terminal, Dimensions, F_SHADER, V_SHADER, Sprite, SpriteMap};
+use crate::graphics::{Dimensions, F_SHADER, V_SHADER, Sprite, SpriteMap};
+use crate::terminal::{Terminal};
 
 pub struct App {
     pub events_loop: glutin::EventsLoop,
