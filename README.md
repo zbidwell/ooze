@@ -4,52 +4,39 @@ A pseudo-console for roguelike development
 
 ![Example Gif](https://github.com/zbidwell/Ooze/blob/master/resources/example.gif)
 
+The code for the above example.
 ```rust
-use std::time::Duration;
-
 use ooze;
-use ooze::app::App;
-use ooze::graphics::{Dimensions, Point};
+use ooze::app::*;
+use ooze::graphics::*;
+use ooze::terminal::*;
+
+use std::time::Duration;
+use rand::random;
+use std::thread;
 
 fn main() {
-    // Dimension for the screen as Sprite size, terminal size, offset
-    let screen_dims = Dimensions::new(
-        Point::new(8, 8),
-        Point::new(80, 50),
-        Point::new(0, 0)
-    );
-    // Upscale the sprites from 8x8 to 16x16
-    let scale = 2.0;
+    // App initialize
+    let mut app = App::new(Dimensions::new(16, 16, 10, 10, 0, 0), 2.0, "Showoff", r#"resources\sheets\showoff.png"#);
+    // position for our slime
+    app.game_state = [6, 2];
 
-    // Create the main application object
-    let mut a = App::new(screen_dims, scale, "Ooze");
+    // Use root_pane for walls and floors
+    app.terminal.root_pane.fill_with("floor", [0.07, 0.04, 0.06, 1.0], [0.0, 0.0, 0.0, 1.0]);
+    app.terminal.root_pane.make_border("wall", [0.09, 0.03, 0.04, 1.0], [0.0, 0.0, 0.0, 1.0]);
 
-    // Dimensions for the sub-pane copy from the screen with some changes
-    let pane_dims = screen_dims
-        .with_term_size(Point::new(60, 30))
-        .with_offset(Point::new(10, 10));
+    // Add pane above that for the ooze
+    app.terminal.root_pane.add_sub_pane_with(app.terminal.root_pane.dims);
+    app.terminal.root_pane.sub_panes[0].place(6, 2, "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]);
 
-    // Add a new sub-pane to the root pane and fill it with randomly colored "@"'s
-    a.terminal.root_pane.add_sub_pane_with(pane_dims);
-    a.terminal.root_pane.sub_panes[0].fill_with_random();
+    // Use our update function
+    app.update_callback = update;
 
-    // Dimensions for the sub-pane of the sub-pane copy from the screen as well
-    let pane_dims = screen_dims
-        .with_term_size(Point::new(50, 20))
-        .with_offset(Point::new(5, 5));
-
-    // Add a pane with these dimensions to the sub-pane above
-    a.terminal.root_pane.sub_panes[0].add_sub_pane_with(pane_dims);
-
-    // Set the application's `update` callback to the one defined below, it is called once each frame.
-    a.update_callback = test_update;
-
-    // Start the application loop.
-    a.run();
+    app.run()
 }
 
-// re-fills the sub-sub-pane with random "@"'s.
-fn test_update(app: &mut App, dt: Duration) {
-    app.terminal.root_pane.sub_panes[0].sub_panes[0].fill_with_random();
+// Move the slime around randomly within the room.
+fn update(app: &mut App, dt: Duration) {
+    // pick a random direction, update some game state, draw the ooze at the new location
 }
 ```
