@@ -59,7 +59,7 @@ impl Pane {
     }
 
     pub fn add_sub_pane_with(&mut self, dims: Dimensions) {
-        let mut pane = Pane::new(dims);
+        let pane = Pane::new(dims);
         self.add_sub_pane(pane);
     }
 

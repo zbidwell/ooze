@@ -40,6 +40,6 @@ impl GameState for MyGameState {
 }
 
 // re-fills the sub-sub-pane with random "@"'s.
-fn test_update(app: &mut App<MyGameState>, game_state: &mut MyGameState) {
+fn test_update(app: &mut App<MyGameState>, _game_state: &mut MyGameState) {
     app.terminal.root_pane.sub_panes[0].sub_panes[0].fill_with_random();
 }

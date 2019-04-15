@@ -1,4 +1,3 @@
-use std::time::{Instant};
 use std::path::Path;
 
 use glium;
@@ -64,7 +63,6 @@ impl<G: GameState> App<G> {
 
     pub fn run(&mut self, game_state: &mut G) {
         let mut closed = false;
-        let mut start = Instant::now();
         while !closed {
             // clear, draw the terminal, and flip the window
             self.draw();
@@ -79,9 +77,6 @@ impl<G: GameState> App<G> {
             });
 
             self.update(game_state);
-
-            println!("{:?}", start.elapsed());
-            start = Instant::now();
         }
     }
 }
