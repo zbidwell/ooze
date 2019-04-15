@@ -33,7 +33,7 @@ impl<G: GameState> App<G> {
             );
 
         let terminal = Terminal::new(dims);
-        let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
+        let program = glium::Program::from_source(&display, V_SHADER.as_str(), F_SHADER.as_str(), None).unwrap();
         let sprites = SpriteMap::from_sheet(&display, Path::new(sprite_sheet));
 
         App {

@@ -1,4 +1,6 @@
 use glium;
+use std::fs::read_to_string;
+use lazy_static::lazy_static;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -16,34 +18,8 @@ impl Vertex {
     }
 }
 
-pub const V_SHADER: &str = r#"
-    #version 140
-            in vec2 position;
-            in vec2 tex_coords;
-
-            out vec2 v_tex_coords;
-
-            void main() {
-                v_tex_coords = tex_coords;
-                gl_Position = vec4(position, 0.0, 1.0);
-            }
-"#;
-
-pub const F_SHADER: &str = r#"
-    #version 140
-            in vec2 v_tex_coords;
-
-            out vec4 color;
-
-            uniform vec4 bg_color;
-            uniform vec4 fg_color;
-            uniform sampler2D tex;
-
-            void main() {
-                if (texture(tex, v_tex_coords).a == 0.0) {
-                    color = bg_color;
-                } else {
-                    color = fg_color * texture(tex, v_tex_coords);
-                }
-            }
-"#;
+// needed to load and export things. Kind of like a const that is created on first access?
+lazy_static! {
+    pub static ref V_SHADER: String = read_to_string(r#"resources\shaders\vertex\v_shader_default.vert"#).unwrap();
+    pub static ref F_SHADER: String = read_to_string(r#"resources\shaders\fragment\f_shader_default.frag"#).unwrap();
+}
