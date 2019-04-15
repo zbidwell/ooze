@@ -1,5 +1,4 @@
 use std::time::{Instant, Duration};
-use std::collections::HashMap;
 use std::path::Path;
 
 use glium;
@@ -19,10 +18,12 @@ pub struct App {
     pub sprites: SpriteMap,
 
     pub update_callback: fn(&mut App, Duration) -> (),
+
+    pub game_state: [i32; 2],
 }
 
 impl App {
-    pub fn new(dims: Dimensions, scale: f32, title: &str) -> App {
+    pub fn new(dims: Dimensions, scale: f32, title: &str, sprite_sheet: &str) -> App {
         let (events_loop, display) =
             init_window(
                 (dims.glyph_size.x as f32 * dims.term_size.x as f32 * scale) as usize,
@@ -32,7 +33,7 @@ impl App {
 
         let terminal = Terminal::new(dims);
         let program = glium::Program::from_source(&display, V_SHADER, F_SHADER, None).unwrap();
-        let sprites = SpriteMap::from_sheet(&display, &Path::new(r#"resources\sheets\test_sheet.png"#), &Path::new(r#"resources\sheets\test_sheet.xml"#));
+        let sprites = SpriteMap::from_sheet(&display, Path::new(sprite_sheet));
 
         App {
             events_loop,
@@ -41,6 +42,7 @@ impl App {
             terminal,
             sprites,
             update_callback: default_update_callback,
+            game_state: [0, 0],
         }
     }
 

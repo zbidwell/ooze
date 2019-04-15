@@ -44,12 +44,24 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-    pub fn new(glyph_size: Point, term_size: Point, offset: Point) -> Dimensions {
+    pub fn new(glyph_width: i32, glyph_height: i32, term_width: i32, term_height: i32, offset_x: i32, offset_y: i32) -> Dimensions {
+        Dimensions {
+            glyph_size: Point::new(glyph_width, glyph_height),
+            term_size: Point::new(term_width, term_height),
+            offset: Point::new(offset_x, offset_y),
+        }
+    }
+
+    pub fn from_sizes(glyph_size: Point, term_size: Point, offset: Point) -> Dimensions {
         Dimensions {
             glyph_size,
             term_size,
             offset,
         }
+    }
+
+    pub fn copy_for_pane(&self, term_size: Point, offset: Point) -> Dimensions {
+        self.clone().with_term_size(term_size).with_offset(offset)
     }
 
     pub fn with_glyph_size(&self, glyph_size: Point) -> Dimensions {

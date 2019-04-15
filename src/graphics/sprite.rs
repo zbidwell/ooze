@@ -58,9 +58,12 @@ impl SpriteMap {
         }
     }
 
-    pub fn from_sheet(display: &Display, sheet_path: &Path, metadata_path: &Path) -> SpriteMap {
+    pub fn from_sheet(display: &Display, sheet_path: &Path) -> SpriteMap {
         let mut map = HashMap::new();
         
+        let metadata_path = sheet_path.with_extension("xml");
+        println!("{:?}", &metadata_path);
+
         let reader = BufReader::new(File::open(metadata_path).unwrap());
         let sheet_element = xmltree::Element::parse(reader).unwrap();
         let dims_element = sheet_element.get_child("dimensions").unwrap();

@@ -31,8 +31,8 @@ impl Pane {
                     for y in 0..dims.term_size.y {
                         outer[x as usize].push(Glyph::new(
                             Point::new(x, y),
-                            [1.0, 1.0, 1.0, 1.0],
-                            [0.0, 0.0, 0.0, 1.0],
+                            [1.0, 1.0, 1.0, 0.0],
+                            [0.0, 0.0, 0.0, 0.0],
                             "empty".to_string(),
                         ));
                     }
@@ -61,10 +61,46 @@ impl Pane {
         self.sub_panes.push(pane);
     }
 
-    pub fn add_sub_pane_with(&mut self, dims: Dimensions){
+    pub fn add_sub_pane_with(&mut self, dims: Dimensions) {
         let mut pane = Pane::new(dims);
-        pane.layer = self.layer + 1;
         self.add_sub_pane(pane);
+    }
+
+    pub fn place(&mut self, x: usize, y: usize, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
+        self.contents[x as usize][y as usize] = Glyph::new(
+            Point::new(x as i32, y as i32),
+            fg_color,
+            bg_color,
+            id.to_string(),
+        );
+    }
+
+    pub fn make_border(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
+        for x in 0..self.dims.term_size.x {
+            for y in 0..self.dims.term_size.y {
+                if x == 0 || x == self.dims.term_size.x - 1 || y == 0 || y == self.dims.term_size.y - 1 {
+                    self.contents[x as usize][y as usize] = Glyph::new(
+                        Point::new(x, y),
+                        fg_color,
+                        bg_color,
+                        id.to_string(),
+                    );
+                }
+            }
+        }
+    }
+
+    pub fn fill_with(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
+        for x in 0..self.dims.term_size.x {
+            for y in 0..self.dims.term_size.y {
+                self.contents[x as usize][y as usize] = Glyph::new(
+                    Point::new(x, y),
+                    fg_color,
+                    bg_color,
+                    id.to_string(),
+                );
+            }
+        }
     }
 
     pub fn fill_with_random(&mut self) {

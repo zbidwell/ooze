@@ -40,10 +40,10 @@ pub const F_SHADER: &str = r#"
             uniform sampler2D tex;
 
             void main() {
-                if (texture(tex, v_tex_coords).a < 0.5) {
+                if (texture(tex, v_tex_coords).a == 0.0) {
                     color = bg_color;
                 } else {
-                    color = fg_color;
+                    color = fg_color * texture(tex, v_tex_coords);
                 }
             }
 "#;
