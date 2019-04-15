@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-use crate::terminal::{Terminal, Glyph};
-use crate::graphics::{V_SHADER, F_SHADER, Vertex, Dimensions, Sprite, Point};
-use glium::{Frame, Surface, Program, Blend};
-use glium::backend::glutin::Display;
+use crate::terminal::{Glyph};
+use crate::graphics::{Dimensions, Point};
 
 use rand;
 

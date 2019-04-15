@@ -1,7 +1,5 @@
-use std::time::Duration;
-
 use ooze;
-use ooze::app::App;
+use ooze::app::{App, GameState};
 use ooze::graphics::{Dimensions, Point};
 
 fn main() {
@@ -29,11 +27,19 @@ fn main() {
     // Set the application's `update` callback to the one defined below, it is called once each frame.
     a.update_callback = test_update;
 
+    // Create an empty gamestate
+    let mut g = MyGameState{};
+
     // Start the application loop.
-    a.run();
+    a.run(&mut g);
+}
+
+struct MyGameState {}
+impl GameState for MyGameState {
+    fn update(&mut self) {}
 }
 
 // re-fills the sub-sub-pane with random "@"'s.
-fn test_update(app: &mut App, dt: Duration) {
+fn test_update(app: &mut App<MyGameState>, game_state: &mut MyGameState) {
     app.terminal.root_pane.sub_panes[0].sub_panes[0].fill_with_random();
 }

@@ -1,17 +1,45 @@
 use ooze;
 use ooze::app::*;
 use ooze::graphics::*;
-use ooze::terminal::*;
-
-use std::time::Duration;
 use rand::random;
 use std::thread;
+use std::time::Duration;
+
+struct MyGameState {
+    pos: [i32; 2]
+}
+
+impl GameState for MyGameState {
+    fn update(&mut self) {
+        let mut x_dir = if random::<f32>() > 0.5 {
+        1
+        } else {
+            -1
+        };
+        let mut y_dir = if random::<f32>() > 0.5 {
+            1
+        } else {
+            -1
+        };
+
+        if self.pos[0] + x_dir >= 8 || self.pos[0] + x_dir <= 1 {
+            x_dir = 0;
+        }
+        if self.pos[1] + y_dir >= 8 || self.pos[1] + y_dir <= 1 {
+            y_dir = 0;
+        }
+
+        let new_pos = [x_dir + self.pos[0], y_dir + self.pos[1]];
+
+        self.pos = new_pos;
+    }
+}
 
 fn main() {
     // App initialize
     let mut app = App::new(Dimensions::new(16, 16, 10, 10, 0, 0), 2.0, "Showoff", r#"resources\sheets\showoff.png"#);
     // position for our slime
-    app.game_state = [6, 2];
+    let mut game_state = MyGameState{pos:[6, 2]};
 
     // Use root_pane for walls and floors
     app.terminal.root_pane.fill_with("floor", [0.07, 0.04, 0.06, 1.0], [0.0, 0.0, 0.0, 1.0]);
@@ -24,35 +52,14 @@ fn main() {
     // Use our update function
     app.update_callback = update;
 
-    app.run()
+    app.run(&mut game_state);
 }
 
 // Moves the slime around randomly within the room
-fn update(app: &mut App, dt: Duration) {
-    let pos = app.game_state;
-    let mut x_dir = if random::<f32>() > 0.5 {
-        1
-    } else {
-        -1
-    };
-    let mut y_dir = if random::<f32>() > 0.5 {
-        1
-    } else {
-        -1
-    };
+fn update(app: &mut App<MyGameState>, game_state: &mut MyGameState) {
+    app.terminal.root_pane.sub_panes[0].place(game_state.pos[0] as usize, game_state.pos[1] as usize, "empty", [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]);
+    game_state.update();
+    app.terminal.root_pane.sub_panes[0].place(game_state.pos[0] as usize, game_state.pos[1] as usize, "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]);
 
-    if pos[0] + x_dir >= 8 || pos[0] + x_dir <= 1 {
-        x_dir = 0;
-    }
-    if pos[1] + y_dir >= 8 || pos[1] + y_dir <= 1 {
-        y_dir = 0;
-    }
-
-    let new_pos = [x_dir + pos[0], y_dir + pos[1]];
-    app.game_state = new_pos;
-
-    app.terminal.root_pane.sub_panes[0].place(pos[0] as usize, pos[1] as usize, "empty", [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]);
-    app.terminal.root_pane.sub_panes[0].place(new_pos[0] as usize, new_pos[1] as usize, "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]);
-
-    thread::sleep_ms(150);
+    thread::sleep(Duration::from_millis(150));
 }

@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 use crate::terminal::{Pane, Glyph};
-use crate::graphics::{Sprite, Dimensions, Point, SpriteMap};
+use crate::graphics::{Dimensions, Point, SpriteMap};
 use glium::{Frame, Program, Surface, Blend};
 use glium::backend::glutin::Display;
 use glium::uniforms::Sampler;
@@ -28,7 +27,7 @@ impl Terminal {
             .. Default::default()
         };
 
-        for (glyph, point, layer) in glyph_tuples {
+        for (glyph, point, _layer) in glyph_tuples {
             let texture = &sprites.get(&glyph.sprite_id).texture;
 
             let uniforms = glium::uniform! {

@@ -1,14 +1,18 @@
-use std::time::{Instant, Duration};
+use std::time::{Instant};
 use std::path::Path;
 
 use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Dimensions, F_SHADER, V_SHADER, Sprite, SpriteMap};
+use crate::graphics::{Dimensions, F_SHADER, V_SHADER, SpriteMap};
 use crate::terminal::{Terminal};
 
-pub struct App {
+pub trait GameState {
+    fn update(&mut self) {}
+}
+
+pub struct App<G: GameState> {
     pub events_loop: glutin::EventsLoop,
     pub display: glium::Display,
     pub program: glium::Program,
@@ -17,13 +21,11 @@ pub struct App {
 
     pub sprites: SpriteMap,
 
-    pub update_callback: fn(&mut App, Duration) -> (),
-
-    pub game_state: [i32; 2],
+    pub update_callback: fn(&mut App<G>, &mut G) -> (),
 }
 
-impl App {
-    pub fn new(dims: Dimensions, scale: f32, title: &str, sprite_sheet: &str) -> App {
+impl<G: GameState> App<G> {
+    pub fn new(dims: Dimensions, scale: f32, title: &str, sprite_sheet: &str) -> App<G> {
         let (events_loop, display) =
             init_window(
                 (dims.glyph_size.x as f32 * dims.term_size.x as f32 * scale) as usize,
@@ -42,13 +44,12 @@ impl App {
             terminal,
             sprites,
             update_callback: default_update_callback,
-            game_state: [0, 0],
         }
     }
 
 
-    fn update(&mut self, dt: Duration) {
-        (self.update_callback)(self, dt);
+    fn update(&mut self, game_state: &mut G) {
+        (self.update_callback)(self, game_state);
     }
 
     fn draw(&self) {
@@ -61,7 +62,7 @@ impl App {
         target.finish().expect("Failed to flip buffers");
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, game_state: &mut G) {
         let mut closed = false;
         let mut start = Instant::now();
         while !closed {
@@ -77,18 +78,16 @@ impl App {
                 _ => (),
             });
 
-            self.update(start.elapsed());
+            self.update(game_state);
 
+            println!("{:?}", start.elapsed());
             start = Instant::now();
-
-            //println!("{:?}", start.elapsed())
         }
     }
 }
 
-fn default_update_callback(app: &mut App, dt: Duration) {
-
-}
+// never called
+fn default_update_callback<G: GameState>(_app: &mut App<G>, _game_state: &mut G) {}
 
 // Create an event loop and context
 fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsLoop, glium::Display) {

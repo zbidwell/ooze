@@ -1,12 +1,11 @@
 use image;
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::fs::File;
 use std::collections::HashMap;
 use std::str::FromStr;
 use glium::texture::RawImage2d;
 use glium::texture::Texture2d;
-use glium::uniforms::Sampler;
 use glium::Display;
 use glob::glob;
 use xmltree;
@@ -62,7 +61,6 @@ impl SpriteMap {
         let mut map = HashMap::new();
         
         let metadata_path = sheet_path.with_extension("xml");
-        println!("{:?}", &metadata_path);
 
         let reader = BufReader::new(File::open(metadata_path).unwrap());
         let sheet_element = xmltree::Element::parse(reader).unwrap();
@@ -71,8 +69,6 @@ impl SpriteMap {
 
         let sprite_width = dims_element.get_child("sprite_width").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
         let sprite_height = dims_element.get_child("sprite_height").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-        let sheet_width = dims_element.get_child("sheet_width").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-        let sheet_height = dims_element.get_child("sheet_height").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
 
         for sprite_element in &sprites_element.children {
             let id = sprite_element.attributes.get("id").unwrap().clone();
