@@ -2,6 +2,9 @@ use glium;
 use std::fs::read_to_string;
 use std::path::Path;
 
+use crate::app::OozeResult;
+
+/// A vertex for glium's rendering program.
 #[derive(Copy, Clone)]
 pub struct Vertex {
     pub position: [f32; 2],
@@ -10,6 +13,7 @@ pub struct Vertex {
 glium::implement_vertex!(Vertex, position, tex_coords);
 
 impl Vertex {
+    /// Build a vertex from position and texture coordinate arrays.
     pub fn from_arrays(position: [f32; 2], tex_coords: [f32; 2]) -> Vertex {
         Vertex {
             position,
@@ -18,6 +22,8 @@ impl Vertex {
     }
 }
 
-pub fn get_shader(path: &Path) -> String {
-    read_to_string(path).unwrap()
+/// Return the shader source at the given path.
+pub fn get_shader(path: &Path) -> OozeResult<String> {
+    let s = read_to_string(path)?;
+    Ok(s)
 }

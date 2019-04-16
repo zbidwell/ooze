@@ -1,7 +1,7 @@
 mod glyph;
-mod pane;
+mod panel;
 mod terminal;
 
 pub use glyph::*;
-pub use pane::*;
+pub use panel::*;
 pub use terminal::*;

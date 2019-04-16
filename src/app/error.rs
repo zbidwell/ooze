@@ -3,8 +3,10 @@ use std::fmt;
 
 pub type OozeResult<T> = std::result::Result<T, Box<error::Error>>;
 
+/// Ooze's custom generic error.
 #[derive(Debug)]
 pub struct OozeError;
+// TODO: Add a string to track the error's cause?
 
 impl fmt::Display for OozeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -21,27 +23,3 @@ impl error::Error for OozeError {
         None
     }
 }
-
-// impl From<ProgramCreationError> for OozeError {
-//     fn from(err: ProgramCreationError) -> OozeError {
-//         OozeError
-//     }
-// }
-
-// impl From<DisplayCreationError> for OozeError {
-//     fn from(err: DisplayCreationError) -> OozeError {
-//         OozeError
-//     }
-// }
-
-// impl From<io::Error> for OozeError {
-//     fn from(err: io::Error) -> OozeError {
-//         OozeError
-//     }
-// }
-
-// impl<E: error::Error> From<E> for OozeError {
-//     fn from(err: E) -> OozeError {
-//         OozeError
-//     }
-// }

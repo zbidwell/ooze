@@ -4,7 +4,8 @@ use crate::app::{OozeResult, OozeError};
 
 use rand;
 
-pub struct Pane {
+/// A sort of "sub terminal" that contains glyphs for drawing to the screen. Can contain sub-panels.
+pub struct Panel {
     pub dims: Dimensions,
 
     pub layer: usize,
@@ -12,12 +13,13 @@ pub struct Pane {
 
     pub contents: Vec<Vec<Glyph>>,
 
-    pub sub_panes: Vec<Pane>,
+    pub sub_panels: Vec<Panel>,
 }
 
-impl Pane {
-    pub fn new(dims: Dimensions) -> OozeResult<Pane> {
-        let pane = Pane {
+impl Panel {
+    /// Create a new Panel with the given dimensions.
+    pub fn new(dims: Dimensions) -> OozeResult<Panel> {
+        let panel = Panel {
             dims,
             layer: 0,
             hidden: false,
@@ -37,41 +39,46 @@ impl Pane {
                 }
                 outer
             },
-            sub_panes: Vec::new(),
+            sub_panels: Vec::new(),
         };
 
-        Ok(pane)
+        Ok(panel)
     }
 
+    /// Drawing functions should check Panel.hidden before drawing.
     pub fn hide(&mut self) {
         if !self.hidden {
             self.hidden = true;
         }
     }
 
+    /// Drawing functions should check Panel.hidden before drawing.
     pub fn show(&mut self) {
         if self.hidden {
             self.hidden = false;
         }
     }
 
+    /// A Rect the size of this Panel, bottom-left of Rect at (0, 0).
     pub fn rect(&self) -> Rect {
         Rect::of_size(self.dims.term_size)
     }
 
-    pub fn add_sub_pane(&mut self, mut pane: Pane) -> OozeResult<()> {
-        if !self.rect().contains_rect(pane.dims.rect()) {
+    /// Add the given Panel as a sub-panel to this one. Updates the given Panel's offset and sets its layer to this Panel's + 1.
+    pub fn add_sub_panel(&mut self, mut panel: Panel) -> OozeResult<()> {
+        if !self.rect().contains_rect(panel.dims.rect()) {
             return Err(Box::new(OozeError))
         }
         
-        pane.dims.offset = pane.dims.offset.plus(self.dims.offset);
-        pane.layer = self.layer + 1;
+        panel.dims.offset = panel.dims.offset.plus(self.dims.offset);
+        panel.layer = self.layer + 1;
 
-        self.sub_panes.push(pane);
+        self.sub_panels.push(panel);
 
         Ok(())
     }
 
+    /// Set the Glyph at the given Point.
     pub fn set(&mut self, point: Point, glyph: Glyph) -> OozeResult<()> {
         if !self.rect().contains_point(point) {
             return Err(Box::new(OozeError))
@@ -80,6 +87,7 @@ impl Pane {
         Ok(())
     }
 
+    /// get a reference to the Glyph at the given Point.
     pub fn get(&self, point: Point) -> OozeResult<&Glyph> {
         if !self.rect().contains_point(point) {
             return Err(Box::new(OozeError))
@@ -87,17 +95,20 @@ impl Pane {
         Ok(&self.contents[point.x as usize][point.y as usize])
     }
 
-    pub fn add_sub_pane_with(&mut self, dims: Dimensions) -> OozeResult<()> {
-        let pane = Pane::new(dims)?;
-        self.add_sub_pane(pane)?;
+    /// Create a new sub-panel with the given dimensions and add it to this one.
+    pub fn add_sub_panel_with(&mut self, dims: Dimensions) -> OozeResult<()> {
+        let panel = Panel::new(dims)?;
+        self.add_sub_panel(panel)?;
 
         Ok(())
     }
 
+    /// Set the drawing layer of this Panel.
     pub fn set_layer(&mut self, layer: usize) {
         self.layer = layer;
     }
 
+    /// Place a Glyph with the given info.
     pub fn place(
         &mut self,
         x: u32,
@@ -120,6 +131,7 @@ impl Pane {
         Ok(())
     }
 
+    /// Make a border of Glyphs with the given info on this Panel.
     pub fn make_border(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
         for point in self.rect().points() {
             if point.x == 0 || point.x == self.rect().size.x - 1 || point.y == 0 || point.y == self.rect().size.y - 1 {
@@ -130,6 +142,7 @@ impl Pane {
         Ok(())
     }
 
+    /// Fill the Panel with Glyphs with the given info.
     pub fn fill_with(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
         for point in self.rect().points() {
             self.place(point.x, point.y, id, fg_color, bg_color)?;
@@ -138,16 +151,18 @@ impl Pane {
         Ok(())
     }
 
+    /// Fill the Panel with random Glyphs of random colors.
     pub fn fill_with_random(&mut self) -> OozeResult<()> {
         for point in self.rect().points() {
             let fg_color = [rand::random(), rand::random(), rand::random(), 1.0];
             let bg_color = [rand::random(), rand::random(), rand::random(), 1.0];
-            self.place(point.x, point.y, "@", fg_color, bg_color)?;
+            self.place(point.x, point.y, "random", fg_color, bg_color)?;
         }
 
         Ok(())
     }
 
+    /// Returns a Vector of references to all the glyphs in this Panel. 
     pub fn glyphs(&self) -> Vec<&Glyph> {
         let mut result = Vec::with_capacity((self.dims.term_size.x * self.dims.term_size.y) as usize);
         for column in &self.contents {
@@ -158,11 +173,12 @@ impl Pane {
         result
     }
 
-    pub fn all_sub_panes(&self) -> Vec<&Pane> {
-        let mut result: Vec<&Pane> = Vec::new();
+    /// Returns a Vector of references to all the Panels below this one in the Panel tree.
+    pub fn all_sub_panels(&self) -> Vec<&Panel> {
+        let mut result: Vec<&Panel> = Vec::new();
         result.push(&self);
-        for pane in &self.sub_panes {
-            result.extend(pane.all_sub_panes().iter());
+        for panel in &self.sub_panels {
+            result.extend(panel.all_sub_panels().iter());
         };
 
         result
