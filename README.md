@@ -4,7 +4,11 @@ A pseudo-console for roguelike development
 
 ![Example Gif](https://github.com/zbidwell/Ooze/blob/master/resources/example.gif)
 
-The code for the above example.
+The code for the above example shown and can be run with 
+```
+cargo run --release --example showoff
+```
+
 ```rust
 use ooze;
 use ooze::app::*;
