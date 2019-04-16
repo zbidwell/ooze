@@ -1,6 +1,7 @@
 use crate::app::OozeResult;
 use crate::terminal::{Pane, Glyph};
-use crate::graphics::{Dimensions, Point, SpriteMap};
+use crate::geometry::{Dimensions, Point};
+use crate::graphics::{SpriteMap};
 use glium::{Frame, Program, Surface, Blend};
 use glium::backend::glutin::Display;
 use glium::uniforms::Sampler;

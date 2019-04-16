@@ -1,4 +1,5 @@
 pub mod app;
+pub mod geometry;
 pub mod graphics;
 pub mod terminal;
 

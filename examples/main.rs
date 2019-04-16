@@ -1,6 +1,6 @@
 use ooze;
 use ooze::app::{App, GameState, OozeResult};
-use ooze::graphics::{Dimensions, Point};
+use ooze::geometry::{Dimensions, Point};
 
 fn main() -> ooze::app::OozeResult<()> {
     // Dimension for the screen as Sprite size, terminal size, offset

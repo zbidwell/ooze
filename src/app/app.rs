@@ -5,7 +5,8 @@ use glium::glutin;
 use glium::Surface;
 
 use crate::app::OozeResult;
-use crate::graphics::{Dimensions, SpriteMap, get_shader};
+use crate::geometry::{Dimensions};
+use crate::graphics::{SpriteMap, get_shader};
 use crate::terminal::{Terminal};
 
 pub trait GameState {

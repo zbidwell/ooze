@@ -1,4 +1,4 @@
-use crate::graphics::{Point};
+use crate::geometry::{Point};
 use crate::app::OozeError;
 
 #[derive(Clone, Debug, PartialEq)]

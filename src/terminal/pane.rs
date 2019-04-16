@@ -1,5 +1,5 @@
 use crate::terminal::{Glyph};
-use crate::graphics::{Dimensions, Point, Rect};
+use crate::geometry::{Dimensions, Point, Rect};
 use crate::app::{OozeResult, OozeError};
 
 use rand;
