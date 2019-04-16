@@ -1,6 +1,5 @@
 use ooze;
 use ooze::app::*;
-use ooze::graphics::*;
 use ooze::geometry::*;
 use rand::thread_rng;
 use rand::seq::IteratorRandom;
