@@ -9,14 +9,18 @@ use glium::texture::Texture2d;
 use glium::Display;
 use glob::glob;
 use toml::Value;
+use rand::thread_rng;
+use rand::seq::IteratorRandom;
 
 use crate::app::{OozeResult, OozeError};
 
+/// A sprite that can be drawn to the window. Currently only contains a texture.
 pub struct Sprite {
     pub texture: Texture2d,
 }
 
 impl Sprite {
+    /// Create a new Sprite from a png image and a display context.
     pub fn new<P: AsRef<Path>>(img_path: P, display: &Display) -> OozeResult<Sprite> {
         let r = BufReader::new(File::open(img_path)?);
         let image = image::load(r, image::PNG)?.to_rgba();
@@ -30,6 +34,7 @@ impl Sprite {
         Ok(sprite)
     }
 
+    /// Create a new Sprite from a png spritesheet and image coordinates.
     pub fn from_sheet<P: AsRef<Path>>(sheet_path: P, display: &Display, x: u32, y: u32, width: u32, height: u32) -> OozeResult<Sprite> {
         let r = BufReader::new(File::open(sheet_path)?);
         let mut sheet = image::load(r, image::PNG)?.to_rgba();
@@ -45,11 +50,14 @@ impl Sprite {
     }
 }
 
+/// Maps strings to a Sprite and handles loading of sprites from files or spritesheets.
 pub struct SpriteMap {
     sprite_map: HashMap<String, Sprite>,
 }
 
 impl SpriteMap {
+    /// Create a SpriteMap and load from individual png images located in the given folder and sub-folder.
+    /// Each Sprite is stored in the map under it's filename without an extension. e.g. the sprite loaded from "test.png" would be accessed as SpriteMap.get("test"). 
     pub fn from_files(display: &Display, resource_folder: &Path) -> OozeResult<SpriteMap> {
         let mut map = HashMap::new();
         for file_path in glob((resource_folder.to_str().ok_or(OozeError)?.to_owned() + r#"\**\*.png"#).as_str()).unwrap() {
@@ -65,6 +73,10 @@ impl SpriteMap {
         Ok(sprite_map)
     }
 
+    /// Create a SpriteMap and load the sprites from a spritesheet and metadata file.
+    /// The metadata file needs to be located in the same folder as the spritesheet. 
+    /// It is a .toml file that contains the locations and names of each sprite in the image.
+    /// See the resources folder for examples.
     pub fn from_sheet(display: &Display, sheet_path: &Path) -> OozeResult<SpriteMap> {
         let metadata_path = sheet_path.with_extension("toml");
 
@@ -101,10 +113,21 @@ impl SpriteMap {
         Ok(sprite_map)
     }
 
+    /// Get the sprite with the given id from this SpriteMap. The id "random" is special and will return a random sprite.
     pub fn get(&self, id: &String) -> OozeResult<&Sprite> {
+        if id == "random" {
+            return Ok(self.get_random())
+        }
+
         match self.sprite_map.get(id) {
             Some(s) => Ok(s),
             None => Err(Box::new(OozeError)),
         }
+    }
+
+    /// Get a random sprite from this SpriteMap.
+    pub fn get_random(&self) -> &Sprite {
+        let id = self.sprite_map.keys().choose(&mut thread_rng()).unwrap();
+        self.get(id).unwrap()
     }
 }

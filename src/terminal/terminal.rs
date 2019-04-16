@@ -1,5 +1,5 @@
 use crate::app::OozeResult;
-use crate::terminal::{Pane, Glyph};
+use crate::terminal::{Panel, Glyph};
 use crate::geometry::{Dimensions, Point};
 use crate::graphics::{SpriteMap};
 use glium::{Frame, Program, Surface, Blend};
@@ -7,22 +7,25 @@ use glium::backend::glutin::Display;
 use glium::uniforms::Sampler;
 use glium::uniforms::MagnifySamplerFilter::Nearest;
 
+/// The root object representing what is drawn to the screen.
 pub struct Terminal {
     pub dims: Dimensions,
 
-    pub root_pane: Pane,
+    pub root_panel: Panel,
 }
 
 impl Terminal {
+    /// Creates a new Terminal with the given Dimensions.
     pub fn new(dims: Dimensions) -> OozeResult<Terminal> {
         let terminal = Terminal {
             dims,
-            root_pane: Pane::new(dims)?,
+            root_panel: Panel::new(dims)?,
         };
 
         Ok(terminal)
     }
 
+    /// Collects the glyphs from alll this terminal's sub-panels and draws them to the screen ordered by layer.
     pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &SpriteMap) -> OozeResult<()> {
         let glyph_tuples = self.collect_drawable_glyphs();
 
@@ -52,14 +55,14 @@ impl Terminal {
         Ok(())
     }
 
-    // collects vector of (Glyph, final_point, layer) from each subpane.
+    /// Collects a Vector of (Glyph, final_point, layer) from each sub-panel.
     fn collect_drawable_glyphs(&self) -> Vec<(&Glyph, Point, usize)> {
         let mut result: Vec<(&Glyph, Point, usize)> = Vec::new();
-        let panes: Vec<&Pane> = self.root_pane.all_sub_panes();
-        for pane in panes {
-            if !pane.hidden {
-                for glyph in pane.glyphs() {
-                    result.push((&glyph, glyph.location.plus(pane.dims.offset), pane.layer));
+        let panels: Vec<&Panel> = self.root_panel.all_sub_panels();
+        for panel in panels {
+            if !panel.hidden {
+                for glyph in panel.glyphs() {
+                    result.push((&glyph, glyph.location.plus(panel.dims.offset), panel.layer));
                 }
             }
         };

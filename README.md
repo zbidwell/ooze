@@ -24,13 +24,13 @@ fn main() -> OozeResult<()> {
     // position for our slime
     let mut game_state = MyGameState{pos:[6, 2]};
 
-    // Use root_pane for walls and floors
-    app.terminal.root_pane.fill_with("floor", [0.07, 0.04, 0.06, 1.0], [0.0, 0.0, 0.0, 1.0])?;
-    app.terminal.root_pane.make_border("wall", [0.09, 0.03, 0.04, 1.0], [0.0, 0.0, 0.0, 1.0])?;
+    // Use root_panel for walls and floors
+    app.terminal.root_panel.fill_with("floor", [0.07, 0.04, 0.06, 1.0], [0.0, 0.0, 0.0, 1.0])?;
+    app.terminal.root_panel.make_border("wall", [0.09, 0.03, 0.04, 1.0], [0.0, 0.0, 0.0, 1.0])?;
 
-    // Add pane above that for the ooze
-    app.terminal.root_pane.add_sub_pane_with(app.terminal.root_pane.dims)?;
-    app.terminal.root_pane.sub_panes[0].place(6, 2, "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0])?;
+    // Add panel above that for the ooze
+    app.terminal.root_panel.add_sub_panel_with(app.terminal.root_panel.dims)?;
+    app.terminal.root_panel.sub_panels[0].place(6, 2, "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0])?;
 
     // Use our update function
     app.update_callback = update;
@@ -43,9 +43,9 @@ fn main() -> OozeResult<()> {
 
 // Moves the slime around randomly within the room
 fn update(app: &mut App<MyGameState>, game_state: &mut MyGameState) -> OozeResult<()> {
-    app.terminal.root_pane.sub_panes[0].place(game_state.pos[0], game_state.pos[1], "empty", [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0])?;
+    app.terminal.root_panel.sub_panels[0].place(game_state.pos[0], game_state.pos[1], "empty", [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0])?;
     game_state.update();
-    app.terminal.root_pane.sub_panes[0].place(game_state.pos[0], game_state.pos[1], "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0])?;
+    app.terminal.root_panel.sub_panels[0].place(game_state.pos[0], game_state.pos[1], "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0])?;
 
     thread::sleep(Duration::from_millis(150));
 
