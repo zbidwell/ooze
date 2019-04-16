@@ -1,9 +1,0 @@
-[dimensions]
-sprite_width = 8
-sprite_height = 8
-
-[sprites]
-A = [0, 1]
-"@" = [1, 1]
-empty = [0, 0]
-half = [1, 0]

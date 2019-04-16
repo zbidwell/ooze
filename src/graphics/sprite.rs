@@ -115,10 +115,6 @@ impl SpriteMap {
 
     /// Get the sprite with the given id from this SpriteMap. The id "random" is special and will return a random sprite.
     pub fn get(&self, id: &String) -> OozeResult<&Sprite> {
-        if id == "random" {
-            return Ok(self.get_random())
-        }
-
         match self.sprite_map.get(id) {
             Some(s) => Ok(s),
             None => Err(Box::new(OozeError)),

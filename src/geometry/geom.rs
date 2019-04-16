@@ -63,7 +63,7 @@ impl Rect {
     pub fn points(&self) -> Vec<Point> {
         let mut result = Vec::with_capacity((self.size.x * self.size.y) as usize);
         for x in self.bottom_left.x..self.bottom_left.x+self.size.x {
-            for y in self.bottom_left.y..self.bottom_left.y+self.size.x {
+            for y in self.bottom_left.y..self.bottom_left.y+self.size.y {
                 result.push(Point::new(x, y));
             }
         }
