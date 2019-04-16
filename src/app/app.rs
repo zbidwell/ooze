@@ -4,7 +4,7 @@ use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::graphics::{Dimensions, F_SHADER, V_SHADER, SpriteMap};
+use crate::graphics::{Dimensions, SpriteMap, get_shader};
 use crate::terminal::{Terminal};
 
 pub trait GameState {
@@ -33,7 +33,12 @@ impl<G: GameState> App<G> {
             );
 
         let terminal = Terminal::new(dims);
-        let program = glium::Program::from_source(&display, V_SHADER.as_str(), F_SHADER.as_str(), None).unwrap();
+        let program = glium::Program::from_source(
+            &display,
+            get_shader(Path::new(r#"resources\shaders\vertex\v_shader_default.vert"#)).as_str(),
+            get_shader(Path::new(r#"resources\shaders\fragment\f_shader_default.frag"#)).as_str(),
+            None
+        ).unwrap();
         let sprites = SpriteMap::from_sheet(&display, Path::new(sprite_sheet));
 
         App {

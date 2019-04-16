@@ -1,6 +1,6 @@
 use glium;
 use std::fs::read_to_string;
-use lazy_static::lazy_static;
+use std::path::Path;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -18,8 +18,6 @@ impl Vertex {
     }
 }
 
-// needed to load and export things. Kind of like a const that is created on first access?
-lazy_static! {
-    pub static ref V_SHADER: String = read_to_string(r#"resources\shaders\vertex\v_shader_default.vert"#).unwrap();
-    pub static ref F_SHADER: String = read_to_string(r#"resources\shaders\fragment\f_shader_default.frag"#).unwrap();
+pub fn get_shader(path: &Path) -> String {
+    read_to_string(path).unwrap()
 }

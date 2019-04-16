@@ -1,14 +1,14 @@
 use image;
 use std::io::BufReader;
 use std::path::{Path};
-use std::fs::File;
+use std::fs::{File, read_to_string};
 use std::collections::HashMap;
 use std::str::FromStr;
 use glium::texture::RawImage2d;
 use glium::texture::Texture2d;
 use glium::Display;
 use glob::glob;
-use xmltree;
+use toml::Value;
 
 pub struct Sprite {
     pub texture: Texture2d,
@@ -58,24 +58,32 @@ impl SpriteMap {
     }
 
     pub fn from_sheet(display: &Display, sheet_path: &Path) -> SpriteMap {
+        let metadata_path = sheet_path.with_extension("toml");
+
+        let root_table = read_to_string(metadata_path).unwrap().parse::<Value>().unwrap();
+
+        let sprite_width = root_table["dimensions"]["sprite_width"].as_integer().unwrap() as u32;
+        let sprite_height = root_table["dimensions"]["sprite_height"].as_integer().unwrap() as u32;
+        
+        let sprites = root_table["sprites"].as_table().unwrap();
+
         let mut map = HashMap::new();
-        
-        let metadata_path = sheet_path.with_extension("xml");
+        for name in sprites.keys() {
+            let id = name.clone();
+            let x = sprites[name][0].as_integer().unwrap() as u32;
+            let y = sprites[name][1].as_integer().unwrap() as u32;
 
-        let reader = BufReader::new(File::open(metadata_path).unwrap());
-        let sheet_element = xmltree::Element::parse(reader).unwrap();
-        let dims_element = sheet_element.get_child("dimensions").unwrap();
-        let sprites_element = sheet_element.get_child("sprites").unwrap();
-
-        let sprite_width = dims_element.get_child("sprite_width").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-        let sprite_height = dims_element.get_child("sprite_height").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-
-        for sprite_element in &sprites_element.children {
-            let id = sprite_element.attributes.get("id").unwrap().clone();
-            let x = sprite_element.get_child("x").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-            let y = sprite_element.get_child("y").unwrap().text.clone().unwrap().parse::<u32>().unwrap();
-        
-            map.insert(id, Sprite::from_sheet(sheet_path, display, x*sprite_width, y*sprite_height, sprite_width, sprite_height));
+            map.insert(
+                id,
+                Sprite::from_sheet(
+                    sheet_path,
+                    display,
+                    x * sprite_width,
+                    y * sprite_height,
+                    sprite_width,
+                    sprite_height
+                )
+            );
         }
 
         SpriteMap {

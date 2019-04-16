@@ -1,0 +1,11 @@
+[dimensions]
+sprite_width = 16
+sprite_height = 16
+sheet_width = 4
+sheet_height = 4
+
+[sprites]
+empty = [0, 0]
+wall = [1, 0]
+floor = [0, 1]
+ooze = [1, 1]
