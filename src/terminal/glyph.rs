@@ -1,5 +1,7 @@
 use crate::graphics::{Point};
+use crate::app::OozeError;
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Glyph {
     pub location: Point,
 
@@ -9,13 +11,26 @@ pub struct Glyph {
 }
 
 impl Glyph {
-    pub fn new(location: Point, fg_color: [f32; 4], bg_color: [f32; 4], sprite_id: String) -> Glyph {
-        Glyph {
-            location,
-            fg_color,
-            bg_color,
-            sprite_id,
+    pub fn new(location: Point, fg_color: [f32; 4], bg_color: [f32; 4], sprite_id: String) -> Result<Glyph, OozeError> {
+        for c in &fg_color {
+            if *c < 0.0 || *c > 1.0 {
+                return Err(OozeError)
+            }
         }
+        for c in &bg_color {
+            if *c < 0.0 || *c > 1.0 {
+                return Err(OozeError)
+            }
+        }
+        
+        Ok(
+            Glyph {
+                location,
+                fg_color,
+                bg_color,
+                sprite_id,
+            }
+        )
     }
 
     // use by drawing functions to see if this hides lower glyphs

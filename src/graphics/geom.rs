@@ -2,12 +2,12 @@ use crate::graphics::Vertex;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
-    pub x: i32,
-    pub y: i32,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Point {
-    pub fn new(x: i32, y: i32) -> Point {
+    pub fn new(x: u32, y: u32) -> Point {
         Point { x, y }
     }
 
@@ -37,6 +37,45 @@ impl Point {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Rect {
+    pub bottom_left: Point,
+    pub size: Point,
+}
+
+impl Rect {
+    pub fn new(bottom_left: Point, size: Point) -> Rect {
+        Rect { bottom_left, size }
+    }
+
+    pub fn of_size(size: Point) -> Rect {
+        Rect::new(Point::new(0, 0), size)
+    }
+
+    pub fn points(&self) -> Vec<Point> {
+        let mut result = Vec::with_capacity((self.size.x * self.size.y) as usize);
+        for x in self.bottom_left.x..self.bottom_left.x+self.size.x {
+            for y in self.bottom_left.y..self.bottom_left.y+self.size.x {
+                result.push(Point::new(x, y));
+            }
+        }
+        result
+    }
+
+    pub fn contains_point(&self, point: Point) -> bool {
+        point.x >= self.bottom_left.x &&
+        point.x < self.bottom_left.x + self.size.x &&
+        point.y >= self.bottom_left.y &&
+        point.y < self.bottom_left.y + self.size.y
+    }
+
+    pub fn contains_rect(&self, rect: Rect) -> bool {
+        let bl = rect.bottom_left;
+        let tr = rect.bottom_left.plus(Point::new(rect.size.x - 1, rect.size.y - 1));
+        self.contains_point(bl) && self.contains_point(tr)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Dimensions {
     pub glyph_size: Point,
     pub term_size: Point,
@@ -44,7 +83,7 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-    pub fn new(glyph_width: i32, glyph_height: i32, term_width: i32, term_height: i32, offset_x: i32, offset_y: i32) -> Dimensions {
+    pub fn new(glyph_width: u32, glyph_height: u32, term_width: u32, term_height: u32, offset_x: u32, offset_y: u32) -> Dimensions {
         Dimensions {
             glyph_size: Point::new(glyph_width, glyph_height),
             term_size: Point::new(term_width, term_height),
@@ -58,6 +97,10 @@ impl Dimensions {
             term_size,
             offset,
         }
+    }
+
+    pub fn rect(&self) -> Rect {
+        Rect::new(self.offset, self.term_size)
     }
 
     pub fn copy_for_pane(&self, term_size: Point, offset: Point) -> Dimensions {

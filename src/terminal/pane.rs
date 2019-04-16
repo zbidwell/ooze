@@ -1,5 +1,6 @@
 use crate::terminal::{Glyph};
-use crate::graphics::{Dimensions, Point};
+use crate::graphics::{Dimensions, Point, Rect};
+use crate::app::{OozeResult, OozeError};
 
 use rand;
 
@@ -15,8 +16,8 @@ pub struct Pane {
 }
 
 impl Pane {
-    pub fn new(dims: Dimensions) -> Pane {
-        Pane {
+    pub fn new(dims: Dimensions) -> OozeResult<Pane> {
+        let pane = Pane {
             dims,
             layer: 0,
             hidden: false,
@@ -31,13 +32,15 @@ impl Pane {
                             [1.0, 1.0, 1.0, 0.0],
                             [0.0, 0.0, 0.0, 0.0],
                             "empty".to_string(),
-                        ));
+                        )?);
                     }
                 }
                 outer
             },
             sub_panes: Vec::new(),
-        }
+        };
+
+        Ok(pane)
     }
 
     pub fn hide(&mut self) {
@@ -52,67 +55,97 @@ impl Pane {
         }
     }
 
-    pub fn add_sub_pane(&mut self, mut pane: Pane) {
+    pub fn rect(&self) -> Rect {
+        Rect::of_size(self.dims.term_size)
+    }
+
+    pub fn add_sub_pane(&mut self, mut pane: Pane) -> OozeResult<()> {
+        if !self.rect().contains_rect(pane.dims.rect()) {
+            return Err(Box::new(OozeError))
+        }
+        
         pane.dims.offset = pane.dims.offset.plus(self.dims.offset);
         pane.layer = self.layer + 1;
+
         self.sub_panes.push(pane);
+
+        Ok(())
     }
 
-    pub fn add_sub_pane_with(&mut self, dims: Dimensions) {
-        let pane = Pane::new(dims);
-        self.add_sub_pane(pane);
+    pub fn set(&mut self, point: Point, glyph: Glyph) -> OozeResult<()> {
+        if !self.rect().contains_point(point) {
+            return Err(Box::new(OozeError))
+        }
+        self.contents[point.x as usize][point.y as usize] = glyph;
+        Ok(())
     }
 
-    pub fn place(&mut self, x: usize, y: usize, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
-        self.contents[x as usize][y as usize] = Glyph::new(
-            Point::new(x as i32, y as i32),
+    pub fn get(&self, point: Point) -> OozeResult<&Glyph> {
+        if !self.rect().contains_point(point) {
+            return Err(Box::new(OozeError))
+        }
+        Ok(&self.contents[point.x as usize][point.y as usize])
+    }
+
+    pub fn add_sub_pane_with(&mut self, dims: Dimensions) -> OozeResult<()> {
+        let pane = Pane::new(dims)?;
+        self.add_sub_pane(pane)?;
+
+        Ok(())
+    }
+
+    pub fn set_layer(&mut self, layer: usize) {
+        self.layer = layer;
+    }
+
+    pub fn place(
+        &mut self,
+        x: u32,
+        y: u32,
+        id: &str,
+        fg_color: [f32; 4],
+        bg_color: [f32; 4]
+        ) -> OozeResult<()> {
+
+        let point = Point::new(x, y);
+        let glyph = Glyph::new(
+            point,
             fg_color,
             bg_color,
             id.to_string(),
-        );
+        )?;
+
+        self.set(point, glyph)?;
+
+        Ok(())
     }
 
-    pub fn make_border(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
-        for x in 0..self.dims.term_size.x {
-            for y in 0..self.dims.term_size.y {
-                if x == 0 || x == self.dims.term_size.x - 1 || y == 0 || y == self.dims.term_size.y - 1 {
-                    self.contents[x as usize][y as usize] = Glyph::new(
-                        Point::new(x, y),
-                        fg_color,
-                        bg_color,
-                        id.to_string(),
-                    );
-                }
+    pub fn make_border(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
+        for point in self.rect().points() {
+            if point.x == 0 || point.x == self.rect().size.x - 1 || point.y == 0 || point.y == self.rect().size.y - 1 {
+                self.place(point.x, point.y, id, fg_color, bg_color)?;
             }
         }
+
+        Ok(())
     }
 
-    pub fn fill_with(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) {
-        for x in 0..self.dims.term_size.x {
-            for y in 0..self.dims.term_size.y {
-                self.contents[x as usize][y as usize] = Glyph::new(
-                    Point::new(x, y),
-                    fg_color,
-                    bg_color,
-                    id.to_string(),
-                );
-            }
+    pub fn fill_with(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
+        for point in self.rect().points() {
+            self.place(point.x, point.y, id, fg_color, bg_color)?;
         }
+
+        Ok(())
     }
 
-    pub fn fill_with_random(&mut self) {
-        for x in 0..self.dims.term_size.x {
-            for y in 0..self.dims.term_size.y {
-                let fg_color = [rand::random(), rand::random(), rand::random(), 1.0];
-                let bg_color = [rand::random(), rand::random(), rand::random(), 1.0];
-                self.contents[x as usize][y as usize] = Glyph::new(
-                    Point::new(x, y),
-                    fg_color,
-                    bg_color,
-                    "@".to_string(),
-                );
-            }
+    pub fn fill_with_random(&mut self) -> OozeResult<()> {
+        for point in self.rect().points() {
+            let fg_color = [rand::random(), rand::random(), rand::random(), 1.0];
+            let bg_color = [rand::random(), rand::random(), rand::random(), 1.0];
+            self.place(point.x, point.y, "@", fg_color, bg_color)?;
         }
+
+        Ok(())
     }
 
     pub fn glyphs(&self) -> Vec<&Glyph> {

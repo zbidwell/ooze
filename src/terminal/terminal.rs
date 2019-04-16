@@ -1,3 +1,4 @@
+use crate::app::OozeResult;
 use crate::terminal::{Pane, Glyph};
 use crate::graphics::{Dimensions, Point, SpriteMap};
 use glium::{Frame, Program, Surface, Blend};
@@ -12,14 +13,16 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn new(dims: Dimensions) -> Terminal {
-        Terminal {
+    pub fn new(dims: Dimensions) -> OozeResult<Terminal> {
+        let terminal = Terminal {
             dims,
-            root_pane: Pane::new(dims),
-        }
+            root_pane: Pane::new(dims)?,
+        };
+
+        Ok(terminal)
     }
 
-    pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &SpriteMap) {
+    pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &SpriteMap) -> OozeResult<()> {
         let glyph_tuples = self.collect_drawable_glyphs();
 
         let params = glium::DrawParameters {
@@ -28,7 +31,7 @@ impl Terminal {
         };
 
         for (glyph, point, _layer) in glyph_tuples {
-            let texture = &sprites.get(&glyph.sprite_id).texture;
+            let texture = &sprites.get(&glyph.sprite_id)?.texture;
 
             let uniforms = glium::uniform! {
                 bg_color: glyph.bg_color,
@@ -44,6 +47,8 @@ impl Terminal {
                 &params,
             ).unwrap();
         }
+
+        Ok(())
     }
 
     // collects vector of (Glyph, final_point, layer) from each subpane.
