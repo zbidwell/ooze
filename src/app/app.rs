@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use std::time::Instant;
+
 use glium;
 use glium::glutin;
 use glium::Surface;
@@ -92,7 +94,9 @@ impl<G: GameState> App<G> {
     pub fn run(&mut self, game_state: &mut G) -> OozeResult<()> {
         while !self.closed {
             // clear, draw the terminal, and flip the window
+            let start = Instant::now();
             self.draw()?;
+            println!("{:?}", start.elapsed());
 
             // Handle all window events
             self.handle_events(game_state);

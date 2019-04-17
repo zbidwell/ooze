@@ -40,5 +40,11 @@ impl Glyph {
     pub fn is_opaque(&self) -> bool {
         self.bg_color[3] == 1.0
     }
+
+    /// check if both foreground and background colors are fully transparent
+    ///  so the drawing functions can skip computing it.
+    pub fn fully_transparent(&self) -> bool {
+        self.bg_color[3] == 0.0 && self.fg_color[3] == 0.0
+    }
 }
 

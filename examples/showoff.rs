@@ -12,7 +12,7 @@ use ooze::geometry::*;
 
 fn main() -> OozeResult<()> {
     // App initialize
-    let mut app = App::new(Dimensions::new(16, 16, 10, 10, 0, 0), 2.0, "Showoff", Path::new(r#"resources\sheets\showoff.png"#)).unwrap();
+    let mut app = App::new(Dimensions::new(16, 16, 80, 50, 0, 0), 1.0, "Showoff", Path::new(r#"resources\sheets\showoff.png"#)).unwrap();
     // position for our slime
     let mut game_state = MyGameState{pos:[6, 2]};
 
@@ -37,7 +37,7 @@ fn update_game(app: &mut App<MyGameState>, game_state: &mut MyGameState) {
     game_state.update();
     app.terminal.root_panel.sub_panels[0].place(game_state.pos[0], game_state.pos[1], "ooze", [0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]).unwrap();
 
-    thread::sleep(Duration::from_millis(150));
+    //thread::sleep(Duration::from_millis(150));
 }
 
 // Holds the position of the ooze

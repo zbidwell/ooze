@@ -62,7 +62,9 @@ impl Terminal {
         for panel in panels {
             if !panel.hidden {
                 for glyph in panel.glyphs() {
-                    result.push((&glyph, glyph.location.plus(panel.dims.offset), panel.layer));
+                    if !glyph.fully_transparent() {
+                        result.push((&glyph, glyph.location.plus(panel.dims.offset), panel.layer));
+                    }
                 }
             }
         };
