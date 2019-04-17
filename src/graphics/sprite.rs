@@ -12,7 +12,7 @@ use toml::Value;
 use rand::thread_rng;
 use rand::seq::IteratorRandom;
 
-use crate::app::{OozeResult, OozeError};
+use crate::error::{OozeError, OozeResult};
 
 /// A sprite that can be drawn to the window. Currently only contains a texture.
 pub struct Sprite {
@@ -60,9 +60,9 @@ impl SpriteMap {
     /// Each Sprite is stored in the map under it's filename without an extension. e.g. the sprite loaded from "test.png" would be accessed as SpriteMap.get("test"). 
     pub fn from_files(display: &Display, resource_folder: &Path) -> OozeResult<SpriteMap> {
         let mut map = HashMap::new();
-        for file_path in glob((resource_folder.to_str().ok_or(OozeError)?.to_owned() + r#"\**\*.png"#).as_str()).unwrap() {
-            let path = file_path?;
-            let id = String::from_str(path.file_stem().ok_or(OozeError)?.to_str().ok_or(OozeError)?)?;
+        for file_path in glob((resource_folder.to_str().unwrap().to_owned() + r#"\**\*.png"#).as_str()).unwrap() {
+            let path = file_path.unwrap();
+            let id = String::from_str(path.file_stem().ok_or(OozeError::PathError)?.to_str().ok_or(OozeError::PathError)?).unwrap();
             map.insert(id, Sprite::new(path, display)?);
         }
 
@@ -82,16 +82,16 @@ impl SpriteMap {
 
         let root_table = read_to_string(metadata_path)?.parse::<Value>()?;
 
-        let sprite_width = root_table["dimensions"]["sprite_width"].as_integer().ok_or(OozeError)? as u32;
-        let sprite_height = root_table["dimensions"]["sprite_height"].as_integer().ok_or(OozeError)? as u32;
+        let sprite_width = root_table["dimensions"]["sprite_width"].as_integer().ok_or(OozeError::GenericError)? as u32;
+        let sprite_height = root_table["dimensions"]["sprite_height"].as_integer().ok_or(OozeError::GenericError)? as u32;
         
-        let sprites = root_table["sprites"].as_table().ok_or(OozeError)?;
+        let sprites = root_table["sprites"].as_table().ok_or(OozeError::GenericError)?;
 
         let mut map = HashMap::new();
         for name in sprites.keys() {
             let id = name.clone();
-            let x = sprites[name][0].as_integer().ok_or(OozeError)? as u32;
-            let y = sprites[name][1].as_integer().ok_or(OozeError)? as u32;
+            let x = sprites[name][0].as_integer().unwrap() as u32;
+            let y = sprites[name][1].as_integer().unwrap() as u32;
 
             map.insert(
                 id,
@@ -113,21 +113,14 @@ impl SpriteMap {
         Ok(sprite_map)
     }
 
-    /// Get the sprite with the given id from this SpriteMap. The id "random" is special and will return a random sprite.
+    /// Get the sprite with the given id from this SpriteMap.
     pub fn get(&self, id: &String) -> OozeResult<&Sprite> {
-        if id == "random" {
-            return Ok(self.get_random())
-        }
-
-        match self.sprite_map.get(id) {
-            Some(s) => Ok(s),
-            None => Err(Box::new(OozeError)),
-        }
+        Ok(self.sprite_map.get(id).ok_or(OozeError::GenericError)?)
     }
 
     /// Get a random sprite from this SpriteMap.
-    pub fn get_random(&self) -> &Sprite {
-        let id = self.sprite_map.keys().choose(&mut thread_rng()).unwrap();
-        self.get(id).unwrap()
+    pub fn get_random(&self) -> OozeResult<&Sprite> {
+        let id = self.sprite_map.keys().choose(&mut thread_rng()).ok_or(OozeError::GenericError)?;
+        Ok(self.get(id)?)
     }
 }

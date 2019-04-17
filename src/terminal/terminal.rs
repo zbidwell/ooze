@@ -1,4 +1,4 @@
-use crate::app::OozeResult;
+use crate::error::{OozeError, OozeResult};
 use crate::terminal::{Panel, Glyph};
 use crate::geometry::{Dimensions, Point};
 use crate::graphics::{SpriteMap};
@@ -16,13 +16,13 @@ pub struct Terminal {
 
 impl Terminal {
     /// Creates a new Terminal with the given Dimensions.
-    pub fn new(dims: Dimensions) -> OozeResult<Terminal> {
+    pub fn new(dims: Dimensions) -> Terminal {
         let terminal = Terminal {
             dims,
-            root_panel: Panel::new(dims)?,
+            root_panel: Panel::new(dims),
         };
 
-        Ok(terminal)
+        terminal
     }
 
     /// Collects the glyphs from alll this terminal's sub-panels and draws them to the screen ordered by layer.
@@ -44,12 +44,12 @@ impl Terminal {
             };
 
             target.draw(
-                &glium::VertexBuffer::new(display, &point.screen_verts(self.dims)).unwrap(),
+                &glium::VertexBuffer::new(display, &point.screen_verts(self.dims))?,
                 glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
                 program,
                 &uniforms,
                 &params,
-            ).unwrap();
+            )?;
         }
 
         Ok(())

@@ -1,3 +1,4 @@
+pub mod error;
 pub mod app;
 pub mod geometry;
 pub mod graphics;

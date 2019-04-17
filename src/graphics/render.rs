@@ -2,7 +2,7 @@ use glium;
 use std::fs::read_to_string;
 use std::path::Path;
 
-use crate::app::OozeResult;
+use crate::error::OozeResult;
 
 /// A vertex for glium's rendering program.
 #[derive(Copy, Clone)]
@@ -24,6 +24,5 @@ impl Vertex {
 
 /// Return the shader source at the given path.
 pub fn get_shader(path: &Path) -> OozeResult<String> {
-    let s = read_to_string(path)?;
-    Ok(s)
+    Ok(read_to_string(path)?)
 }

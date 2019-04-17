@@ -1,8 +1,6 @@
+use crate::error::{OozeResult, OozeError};
 use crate::terminal::{Glyph};
 use crate::geometry::{Dimensions, Point, Rect};
-use crate::app::{OozeResult, OozeError};
-
-use rand;
 
 /// A sort of "sub terminal" that contains glyphs for drawing to the screen. Can contain sub-panels.
 pub struct Panel {
@@ -18,7 +16,7 @@ pub struct Panel {
 
 impl Panel {
     /// Create a new Panel with the given dimensions.
-    pub fn new(dims: Dimensions) -> OozeResult<Panel> {
+    pub fn new(dims: Dimensions) -> Panel {
         let panel = Panel {
             dims,
             layer: 0,
@@ -34,15 +32,15 @@ impl Panel {
                             [1.0, 1.0, 1.0, 0.0],
                             [0.0, 0.0, 0.0, 0.0],
                             "empty".to_string(),
-                        )?);
+                        ).unwrap());
                     }
                 }
                 outer
             },
             sub_panels: Vec::new(),
         };
-
-        Ok(panel)
+    
+        panel
     }
 
     /// Drawing functions should check Panel.hidden before drawing.
@@ -64,10 +62,11 @@ impl Panel {
         Rect::of_size(self.dims.term_size)
     }
 
-    /// Add the given Panel as a sub-panel to this one. Updates the given Panel's offset and sets its layer to this Panel's + 1.
+    /// Add the given Panel as a sub-panel to this one.
+    /// Updates the given Panel's offset and sets its layer to this Panel's layer + 1.
     pub fn add_sub_panel(&mut self, mut panel: Panel) -> OozeResult<()> {
         if !self.rect().contains_rect(panel.dims.rect()) {
-            return Err(Box::new(OozeError))
+            return Err(Box::new(OozeError::OutOfBoundsError))
         }
         
         panel.dims.offset = panel.dims.offset.plus(self.dims.offset);
@@ -81,25 +80,26 @@ impl Panel {
     /// Set the Glyph at the given Point.
     pub fn set(&mut self, point: Point, glyph: Glyph) -> OozeResult<()> {
         if !self.rect().contains_point(point) {
-            return Err(Box::new(OozeError))
+            return Err(Box::new(OozeError::OutOfBoundsError))
         }
         self.contents[point.x as usize][point.y as usize] = glyph;
+
         Ok(())
     }
 
     /// get a reference to the Glyph at the given Point.
     pub fn get(&self, point: Point) -> OozeResult<&Glyph> {
         if !self.rect().contains_point(point) {
-            return Err(Box::new(OozeError))
+            return Err(Box::new(OozeError::OutOfBoundsError))
         }
+
         Ok(&self.contents[point.x as usize][point.y as usize])
     }
 
     /// Create a new sub-panel with the given dimensions and add it to this one.
     pub fn add_sub_panel_with(&mut self, dims: Dimensions) -> OozeResult<()> {
-        let panel = Panel::new(dims)?;
+        let panel = Panel::new(dims);
         self.add_sub_panel(panel)?;
-
         Ok(())
     }
 
@@ -109,15 +109,7 @@ impl Panel {
     }
 
     /// Place a Glyph with the given info.
-    pub fn place(
-        &mut self,
-        x: u32,
-        y: u32,
-        id: &str,
-        fg_color: [f32; 4],
-        bg_color: [f32; 4]
-        ) -> OozeResult<()> {
-
+    pub fn place(&mut self, x: u32, y: u32, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
         let point = Point::new(x, y);
         let glyph = Glyph::new(
             point,
@@ -169,7 +161,6 @@ impl Panel {
         for panel in &self.sub_panels {
             result.extend(panel.all_sub_panels().iter());
         };
-
         result
     }
 }
