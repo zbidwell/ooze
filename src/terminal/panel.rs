@@ -151,17 +151,6 @@ impl Panel {
         Ok(())
     }
 
-    /// Fill the Panel with random Glyphs of random colors.
-    pub fn fill_with_random(&mut self) -> OozeResult<()> {
-        for point in self.rect().points() {
-            let fg_color = [rand::random(), rand::random(), rand::random(), 1.0];
-            let bg_color = [rand::random(), rand::random(), rand::random(), 1.0];
-            self.place(point.x, point.y, "random", fg_color, bg_color)?;
-        }
-
-        Ok(())
-    }
-
     /// Returns a Vector of references to all the glyphs in this Panel. 
     pub fn glyphs(&self) -> Vec<&Glyph> {
         let mut result = Vec::with_capacity((self.dims.term_size.x * self.dims.term_size.y) as usize);
