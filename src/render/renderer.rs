@@ -37,7 +37,7 @@ impl Renderable for Glyph<'_> {
     }
 }
 
-pub struct TerminalRenderer<'a> {
+pub struct Terminal<'a> {
     display: Display,
 
     size: (usize, usize, usize),
@@ -45,9 +45,9 @@ pub struct TerminalRenderer<'a> {
     contents: Vec<Vec<Vec<Option<Glyph<'a>>>>>,
 }
 
-impl<'a> TerminalRenderer<'a> {
-    pub fn new(display: Display, width: usize, height: usize, layers: usize, cell_width: usize, cell_height: usize) -> TerminalRenderer<'a> {
-        TerminalRenderer {
+impl<'a> Terminal<'a> {
+    pub fn new(display: Display, width: usize, height: usize, layers: usize, cell_width: usize, cell_height: usize) -> Terminal<'a> {
+        Terminal {
             display,
             size: (width, height, layers),
             cell_size: (cell_width, cell_height),
@@ -68,7 +68,7 @@ impl<'a> TerminalRenderer<'a> {
     }
 }
 
-impl<'a> Renderer<Glyph<'a>> for TerminalRenderer<'a> {
+impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
     fn size(&self) -> (usize, usize, usize) {
         self.size
     }
