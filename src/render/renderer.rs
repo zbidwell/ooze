@@ -1,13 +1,114 @@
+use glium;
 use glium::{Display, Frame, Program, glutin};
-use glium::texture::{Texture2d, RawImage2d};
+use glium::texture::{Texture2d};
 
-use rusttype::{point, Font, Scale};
-use image::{ImageBuffer, DynamicImage, Rgba};
+use std::fs::{read_to_string};
 
-use std::fs::{read_to_string, File};
-use std::io::{BufReader, Read};
-use std::collections::HashMap;
-use std::path::Path;
+#[derive(Debug)]
+pub struct Glyph<'a> {
+    texture: &'a Texture2d,
+
+    program: &'a Program,
+
+    fg_color: [f32; 4],
+    bg_color: [f32; 4],
+}
+
+impl<'a> Glyph<'a> {
+    pub fn new(texture: &'a Texture2d, program: &'a Program) -> Glyph<'a> {
+        Glyph {
+            texture,
+            program,
+            fg_color: [1.0, 1.0, 1.0, 1.0],
+            bg_color: [0.0, 0.0, 0.0, 0.0],
+        }
+    }
+
+    
+}
+
+impl Renderable for Glyph<'_> {
+    fn texture(&self) -> &Texture2d {
+        &self.texture
+    }
+
+    fn program(&self) -> &Program {
+        &self.program
+    }
+}
+
+pub struct TerminalRenderer<'a> {
+    display: Display,
+
+    size: (usize, usize, usize),
+    cell_size: (usize, usize),
+    contents: Vec<Vec<Vec<Option<Glyph<'a>>>>>,
+}
+
+impl<'a> TerminalRenderer<'a> {
+    pub fn new(display: Display, width: usize, height: usize, layers: usize, cell_width: usize, cell_height: usize) -> TerminalRenderer<'a> {
+        TerminalRenderer {
+            display,
+            size: (width, height, layers),
+            cell_size: (cell_width, cell_height),
+            contents: {
+                let mut v = Vec::new();
+                for x in 0..width {
+                    v.push(Vec::new());
+                    for y in 0..height {
+                        v[x].push(Vec::new());
+                        for l in 0..layers {
+                            v[x][y].push(None);
+                        }
+                    }
+                }
+                v
+            }
+        }
+    }
+}
+
+impl<'a> Renderer<Glyph<'a>> for TerminalRenderer<'a> {
+    fn size(&self) -> (usize, usize, usize) {
+        self.size
+    }
+
+    fn set(&mut self, x: usize, y: usize, layer: usize, renderable: Glyph<'a>) {
+        self.contents[x][y][layer] = Some(renderable);
+    }
+
+    fn get(&mut self, x: usize, y: usize, layer: usize) -> &Option<Glyph<'a>> {
+        &self.contents[x][y][layer]
+    }
+
+    fn get_all(&self) -> Vec<&Option<Glyph<'a>>> {
+        let mut v = Vec::new();
+        for x in 0..self.size.0 {
+            for y in 0..self.size.1 {
+                for l in 0..self.size.2 {
+                    v.push(&self.contents[x][y][l]);
+                }
+            }
+        }
+        v
+    }
+
+    fn clear(&mut self) {
+        for column in self.contents.iter_mut() {
+            for row in column {
+                for layer in row {
+                    *layer = None
+                }
+            }
+        }
+    }
+
+    fn render(&self) {
+        for g in self.get_all() {
+            println!("{:?}", g);
+        }
+    }
+}
 
 pub trait Renderer<R: Renderable> {
     /// width, height, layers
@@ -17,11 +118,12 @@ pub trait Renderer<R: Renderable> {
 
     fn get(&mut self, x: usize, y: usize, layer: usize) -> &Option<R>;
 
+    fn get_all(&self) -> Vec<&Option<R>>;
+
     fn clear(&mut self);
 
     fn render(&self);
 }
-
 
 pub trait Renderable {
     fn texture(&self) -> &Texture2d;
@@ -29,77 +131,16 @@ pub trait Renderable {
     fn program(&self) -> &Program;
 }
 
-
 pub fn default_program(display: &Display) -> Program {
     Program::from_source(
         display,
         read_to_string("./resources/shaders/vertex/v_shader_default.vert").unwrap().as_str(),
-        read_to_string("./resources/shaders/fragment/f_shader_default.vert").unwrap().as_str(),
+        read_to_string("./resources/shaders/fragment/f_shader_default.frag").unwrap().as_str(),
         None,
     ).expect("Failed to create shader program")
 }
 
-#[derive(Debug)]
-pub struct TextureLibrary {
-    map: HashMap<char, Texture2d>,
-}
-
-impl TextureLibrary {
-    pub fn new() -> TextureLibrary {
-        TextureLibrary { map: HashMap::new() }
-    }
-
-    pub fn build_string<P: AsRef<Path>>(&mut self, display: &Display, s: String, font: P, size: (u32, u32)) {
-        for c in s.chars() {
-            self.build(display, c, &font, size);
-        }
-    }
-
-    pub fn build<P: AsRef<Path>>(&mut self, display: &Display, c: char, font: P, size: (u32, u32)) {
-        let mut bytes = Vec::new();
-        BufReader::new(File::open(font).unwrap()).read_to_end(&mut bytes)
-            .expect("Could not read file");
-    
-        let font_data = &bytes[..];
-        let font = Font::from_bytes(font_data as &[u8])
-            .expect("Could not create font from bytes");
-    
-        let (g_height, g_width) = size;
-
-        let scale = Scale::uniform(g_height as f32);
-
-        let glyph = font.glyph(c)
-            .scaled(scale)
-            .positioned(point(0.0, 0.0));
-
-        let mut image = DynamicImage::new_rgba8(g_width as u32, g_height as u32).to_rgba();
-    
-        glyph.draw(|x, y, v| {
-            image.put_pixel(
-                x + ((g_width - glyph.pixel_bounding_box().unwrap().width() as u32) / 2),
-                y + ((g_height - glyph.pixel_bounding_box().unwrap().height() as u32) / 2),
-                image::Rgba {
-                    data: [0, 0, 0, (v * 255.0) as u8]
-                }
-            )
-        });
-
-        let image = RawImage2d::from_raw_rgba_reversed(&image.into_raw(), size);
-
-        let texture = Texture2d::new(display, image)
-            .expect("Could not create texture from image");
-
-        self.map.insert(c, texture);
-    }
-
-    pub fn get(&self, c: char) -> &Texture2d {
-        self.map.get(&c).unwrap()
-    }
-
-    
-}
-
-fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsLoop, glium::Display) {
+pub fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsLoop, glium::Display) {
     let size = glutin::dpi::LogicalSize::new(width as f64, height as f64);
 
     let events_loop = glutin::EventsLoop::new();
@@ -168,44 +209,20 @@ fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsLoop,
 //     }
 // }
 
-#[cfg(test)]
-mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
-
-    #[test]
-    fn test_texture_library_build() {
-        let (_, d) = init_window(100, 100, "test");
-
-        let mut tl = TextureLibrary::new();
-
-        tl.build_string(&d, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".to_owned(), "./resources/fonts/Roboto-Regular.ttf", (32, 32));
-
-        tl.get('a');
-        tl.get('A');
-    }
-}
-//     #[test]
-//     fn test_set() {
-//         let (mut sr, r) = setup();
-
-//         sr.set(3, 4, 1, r);
-//     }
+// #[cfg(test)]
+// mod tests {
+//     // Note this useful idiom: importing names from outer (for mod tests) scope.
+//     use super::*;
 
 //     #[test]
-//     fn test_get() {
-//         let (mut sr, r) = setup();
+//     fn test_texture_library_build() {
+//         let (_, d) = init_window(100, 100, "test");
 
-//         sr.set(3, 4, 1, r);
-//         assert_eq!(sr.get(3, 4, 1), &Some(r));
-//     }
+//         let mut tl = TextureLibrary::new(d.clone());
 
-//     #[test]
-//     fn test_clear() {
-//         let (mut sr, r) = setup();
+//         tl.build_string("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".to_owned(), "./resources/fonts/Roboto-Regular.ttf", (32, 32));
 
-//         sr.set(3, 4, 1, r);
-//         sr.clear();
-//         assert_eq!(sr.get(3, 4, 1), &None);
+//         tl.get('a');
+//         tl.get('A');
 //     }
 // }
