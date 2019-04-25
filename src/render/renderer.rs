@@ -1,10 +1,40 @@
-use glium;
-use glium::{Display, Frame, Program, glutin};
+use glium::{Display, Frame, Surface, Program, glutin, Blend, uniform};
 use glium::texture::{Texture2d};
+use glium::uniforms::Sampler;
+use glium::uniforms::MagnifySamplerFilter::Nearest;
 
 use std::fs::{read_to_string};
+use std::time::Instant;
+use std::path::Path;
 
-#[derive(Debug)]
+/// A vertex for glium's rendering program.
+#[derive(Copy, Clone, Debug)]
+pub struct Vertex {
+    pub position: [f32; 2],
+    pub tex_coords: [f32; 2],
+}
+glium::implement_vertex!(Vertex, position, tex_coords);
+
+impl Vertex {
+    /// Build a vertex from position and texture coordinate arrays.
+    pub fn from_arrays(position: [f32; 2], tex_coords: [f32; 2]) -> Vertex {
+        Vertex {
+            position,
+            tex_coords,
+        }
+    }
+
+    pub fn from_cell(x: usize, y: usize, max_x: usize, max_y: usize, tex_coords: [f32; 2]) -> Vertex {
+        Vertex {
+            position: {
+                [((x as f32 / max_x as f32) - 0.5) * 2.0, ((y as f32 / max_y as f32) - 0.5) * 2.0]
+            },
+            tex_coords,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Glyph<'a> {
     texture: &'a Texture2d,
 
@@ -19,8 +49,17 @@ impl<'a> Glyph<'a> {
         Glyph {
             texture,
             program,
-            fg_color: [1.0, 1.0, 1.0, 1.0],
+            fg_color: [0.0, 0.0, 0.0, 1.0],
             bg_color: [0.0, 0.0, 0.0, 0.0],
+        }
+    }
+
+    pub fn new_ex(texture: &'a Texture2d, program: &'a Program, fg_color: [f32; 4], bg_color: [f32; 4]) -> Glyph<'a> {
+        Glyph {
+            texture,
+            program,
+            fg_color,
+            bg_color,
         }
     }
 
@@ -41,23 +80,21 @@ pub struct Terminal<'a> {
     display: Display,
 
     size: (usize, usize, usize),
-    cell_size: (usize, usize),
     contents: Vec<Vec<Vec<Option<Glyph<'a>>>>>,
 }
 
 impl<'a> Terminal<'a> {
-    pub fn new(display: Display, width: usize, height: usize, layers: usize, cell_width: usize, cell_height: usize) -> Terminal<'a> {
+    pub fn new(display: Display, width: usize, height: usize, layers: usize) -> Terminal<'a> {
         Terminal {
             display,
             size: (width, height, layers),
-            cell_size: (cell_width, cell_height),
             contents: {
                 let mut v = Vec::new();
                 for x in 0..width {
                     v.push(Vec::new());
                     for y in 0..height {
                         v[x].push(Vec::new());
-                        for l in 0..layers {
+                        for _l in 0..layers {
                             v[x][y].push(None);
                         }
                     }
@@ -65,6 +102,14 @@ impl<'a> Terminal<'a> {
                 v
             }
         }
+    }
+
+    pub fn fill_with(&mut self, layer: usize, glyph: Glyph<'a>) {
+        for x in 0..self.size.0 {
+            for y in 0..self.size.1 {
+                self.set(x, y, layer, glyph.clone());
+            }
+        } 
     }
 }
 
@@ -77,7 +122,7 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
         self.contents[x][y][layer] = Some(renderable);
     }
 
-    fn get(&mut self, x: usize, y: usize, layer: usize) -> &Option<Glyph<'a>> {
+    fn get(&self, x: usize, y: usize, layer: usize) -> &Option<Glyph<'a>> {
         &self.contents[x][y][layer]
     }
 
@@ -104,9 +149,64 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
     }
 
     fn render(&self) {
-        for g in self.get_all() {
-            println!("{:?}", g);
+        let start = Instant::now();
+        // create frame
+        let mut target = self.display.draw();
+        target.clear_color(0.0, 1.0, 1.0, 1.0);
+
+        // build Vec<(Glyph, Vertices, layer)>
+        let vec_start = Instant::now();
+        let mut v: Vec<(&Glyph, [Vertex; 4], usize)> = Vec::new();
+        for x in 0..self.size.0 {
+            for y in 0..self.size.1 {
+                for l in 0..self.size.2 {
+                    if let Some(g) = self.get(x, y, l) {
+                        let verts = [
+                            Vertex::from_cell(x, y + 1, self.size.0, self.size.1, [0.0, 1.0]),
+                            Vertex::from_cell(x + 1, y + 1, self.size.0, self.size.1, [1.0, 1.0]),
+                            Vertex::from_cell(x, y, self.size.0, self.size.1, [0.0, 0.0]),
+                            Vertex::from_cell(x + 1, y, self.size.0, self.size.1, [1.0, 0.0]),
+                        ];
+                        v.push((g, verts, l));
+                    }
+                }
+            }
         }
+        v.sort_by_key(|(_, _, layer)| *layer);
+        println!("build: {:?}", vec_start.elapsed());
+
+        // draw the Glyphs back-to-front
+        let params = glium::DrawParameters {
+            blend: Blend::alpha_blending(),
+            .. Default::default()
+        };
+
+        println!("{:?} glyphs", &v.len());
+        let draw_start = Instant::now();
+        for (glyph, verts, _layer) in v {
+            let texture = glyph.texture();
+            
+            let uniforms = uniform! {
+                bg_color: glyph.bg_color,
+                fg_color: glyph.fg_color,
+                tex: Sampler::new(texture).magnify_filter(Nearest),
+            };
+
+            let g_draw_start = Instant::now();
+            target.draw(
+                &glium::VertexBuffer::new(&self.display, &verts).unwrap(),
+                glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
+                glyph.program(),
+                &uniforms,
+                &params,
+            ).unwrap();
+            println!("\tg_draw: {:?}", g_draw_start.elapsed());
+        }
+        println!("draw: {:?}", draw_start.elapsed());
+
+        target.finish().unwrap();
+
+        println!("{:?}", start.elapsed());
     }
 }
 
@@ -116,7 +216,7 @@ pub trait Renderer<R: Renderable> {
 
     fn set(&mut self, x: usize, y: usize, layer: usize, renderable: R);
 
-    fn get(&mut self, x: usize, y: usize, layer: usize) -> &Option<R>;
+    fn get(&self, x: usize, y: usize, layer: usize) -> &Option<R>;
 
     fn get_all(&self) -> Vec<&Option<R>>;
 
@@ -140,6 +240,15 @@ pub fn default_program(display: &Display) -> Program {
     ).expect("Failed to create shader program")
 }
 
+pub fn build_program<P: AsRef<Path>>(display: &Display, v_shader_path: P, f_shader_path: P) -> Program {
+    Program::from_source(
+        display,
+        read_to_string(v_shader_path).unwrap().as_str(),
+        read_to_string(f_shader_path).unwrap().as_str(),
+        None,
+    ).expect("Failed to create shader program")
+}
+
 pub fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsLoop, glium::Display) {
     let size = glutin::dpi::LogicalSize::new(width as f64, height as f64);
 
@@ -154,75 +263,3 @@ pub fn init_window(width: usize, height: usize, title: &str) -> (glutin::EventsL
 
     (events_loop, display)
 }
-
-// #[derive(Copy, Clone, Debug, PartialEq)]
-// pub struct SimpleRenderable {
-//     pub val: char,
-// }
-
-// impl Renderable for SimpleRenderable {
-//     fn texture(&self) -> char {
-//         self.val
-//     }
-// }
-
-// pub struct SimpleRenderer<SimpleRenderable> {
-//     //pub display: &'a Display,
-
-//     pub contents: [[Option<SimpleRenderable>; 30]; 50],
-// }
-
-// impl SimpleRenderer<SimpleRenderable> {
-//     pub fn new() -> SimpleRenderer<SimpleRenderable> {
-//         let contents = [[None::<SimpleRenderable>; 30]; 50];
-//         SimpleRenderer { contents }
-//     }
-// }
-
-// impl Renderer<SimpleRenderable> for SimpleRenderer<SimpleRenderable> {
-//     fn view_size(&self) -> (usize, usize, usize) {
-//         (30, 50 , 1)
-//     }
-
-//     fn set(&mut self, x: usize, y: usize, _layer: usize, renderable: SimpleRenderable) {
-//         self.contents[x][y] = Some(renderable)
-//     }
-
-//     fn get(&mut self, x: usize, y: usize, _layer: usize) -> &Option<SimpleRenderable> {
-//         &self.contents[x][y]
-//     }
-
-//     fn clear(&mut self) {
-//         for row in self.contents.iter_mut() {
-//             for val in row {
-//                 *val = None;
-//             }
-//         }
-//     }
-
-//     fn render(&self) {
-//         for row in self.contents.iter() {
-//             for val in row {
-//                 println!("{:?}", val);
-//             }
-//         } 
-//     }
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     // Note this useful idiom: importing names from outer (for mod tests) scope.
-//     use super::*;
-
-//     #[test]
-//     fn test_texture_library_build() {
-//         let (_, d) = init_window(100, 100, "test");
-
-//         let mut tl = TextureLibrary::new(d.clone());
-
-//         tl.build_string("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".to_owned(), "./resources/fonts/Roboto-Regular.ttf", (32, 32));
-
-//         tl.get('a');
-//         tl.get('A');
-//     }
-// }
