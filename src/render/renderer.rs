@@ -7,6 +7,8 @@ use std::fs::{read_to_string};
 use std::time::Instant;
 use std::path::Path;
 
+use crate::color::*;
+
 /// A vertex for glium's rendering program.
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
@@ -40,8 +42,8 @@ pub struct Glyph<'a> {
 
     program: &'a Program,
 
-    fg_color: [f32; 4],
-    bg_color: [f32; 4],
+    fg_color: Color,
+    bg_color: Color,
 }
 
 impl<'a> Glyph<'a> {
@@ -49,12 +51,12 @@ impl<'a> Glyph<'a> {
         Glyph {
             texture,
             program,
-            fg_color: [0.0, 0.0, 0.0, 1.0],
-            bg_color: [0.0, 0.0, 0.0, 0.0],
+            fg_color: BLACK,
+            bg_color: CLEAR,
         }
     }
 
-    pub fn new_ex(texture: &'a Texture2d, program: &'a Program, fg_color: [f32; 4], bg_color: [f32; 4]) -> Glyph<'a> {
+    pub fn new_ex(texture: &'a Texture2d, program: &'a Program, fg_color: Color, bg_color: Color) -> Glyph<'a> {
         Glyph {
             texture,
             program,
@@ -155,7 +157,7 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
         target.clear_color(0.0, 1.0, 1.0, 1.0);
 
         // build Vec<(Glyph, Vertices, layer)>
-        let vec_start = Instant::now();
+
         let mut v: Vec<(&Glyph, [Vertex; 4], usize)> = Vec::new();
         for x in 0..self.size.0 {
             for y in 0..self.size.1 {
@@ -173,7 +175,6 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
             }
         }
         v.sort_by_key(|(_, _, layer)| *layer);
-        println!("build: {:?}", vec_start.elapsed());
 
         // draw the Glyphs back-to-front
         let params = glium::DrawParameters {
@@ -181,18 +182,15 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
             .. Default::default()
         };
 
-        println!("{:?} glyphs", &v.len());
-        let draw_start = Instant::now();
         for (glyph, verts, _layer) in v {
             let texture = glyph.texture();
             
             let uniforms = uniform! {
-                bg_color: glyph.bg_color,
-                fg_color: glyph.fg_color,
+                bg_color: glyph.bg_color.as_array(),
+                fg_color: glyph.fg_color.as_array(),
                 tex: Sampler::new(texture).magnify_filter(Nearest),
             };
 
-            let g_draw_start = Instant::now();
             target.draw(
                 &glium::VertexBuffer::new(&self.display, &verts).unwrap(),
                 glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip),
@@ -200,9 +198,7 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
                 &uniforms,
                 &params,
             ).unwrap();
-            println!("\tg_draw: {:?}", g_draw_start.elapsed());
         }
-        println!("draw: {:?}", draw_start.elapsed());
 
         target.finish().unwrap();
 
