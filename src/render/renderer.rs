@@ -1,4 +1,4 @@
-use glium::{Display, Frame, Surface, Program, glutin, Blend, uniform};
+use glium::{Display, Surface, Program, glutin, Blend, uniform};
 use glium::texture::{Texture2d};
 use glium::uniforms::Sampler;
 use glium::uniforms::MagnifySamplerFilter::Nearest;
@@ -51,7 +51,7 @@ impl<'a> Glyph<'a> {
         Glyph {
             texture,
             program,
-            fg_color: BLACK,
+            fg_color: WHITE,
             bg_color: CLEAR,
         }
     }
@@ -64,8 +64,6 @@ impl<'a> Glyph<'a> {
             bg_color,
         }
     }
-
-    
 }
 
 impl Renderable for Glyph<'_> {
@@ -81,8 +79,11 @@ impl Renderable for Glyph<'_> {
 pub struct Terminal<'a> {
     display: Display,
 
-    size: (usize, usize, usize),
-    contents: Vec<Vec<Vec<Option<Glyph<'a>>>>>,
+    pub size: (usize, usize, usize),
+    pub contents: Vec<Vec<Vec<Option<Glyph<'a>>>>>,
+
+    dirties: Vec<(usize, usize)>,
+    old_dirties: Vec<(usize, usize)>,
 }
 
 impl<'a> Terminal<'a> {
@@ -102,16 +103,51 @@ impl<'a> Terminal<'a> {
                     }
                 }
                 v
-            }
+            },
+            dirties: Vec::new(),
+            old_dirties: Vec::new(),
         }
     }
 
-    pub fn fill_with(&mut self, layer: usize, glyph: Glyph<'a>) {
+    fn get_points_2d(&self) -> Vec<(usize, usize)> {
+        let mut v = Vec::new();
         for x in 0..self.size.0 {
             for y in 0..self.size.1 {
+                v.push((x, y))
+            }
+        }
+        v
+    }
+
+    pub fn set_empty(&mut self, x: usize, y: usize, layer: usize) {
+        self.contents[x][y][layer] = None;
+        self.dirties.push((x, y));
+    }
+
+    pub fn clear_dirties(&mut self) {
+        self.old_dirties = self.dirties.clone();
+        self.dirties = Vec::new();
+    }
+
+    pub fn fill_with(&mut self, layer: usize, glyph: Glyph<'a>) {
+        for (x, y) in self.get_points_2d() {
+            self.set(x, y, layer, glyph.clone());
+        }
+    }
+
+    pub fn make_border(&mut self, layer: usize, glyph: Glyph<'a>) {
+        for (x, y) in self.get_points_2d() {
+            if (x == 0 || x == self.size.0 - 1) || (y == 0 || y == self.size.1 - 1) {
                 self.set(x, y, layer, glyph.clone());
             }
         } 
+    }
+
+    pub fn clear_layer(&mut self, layer: usize) {
+        for (x, y) in self.get_points_2d() {
+            self.contents[x][y][layer] = None;
+            self.dirties.push((x, y));
+        }
     }
 }
 
@@ -122,6 +158,7 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
 
     fn set(&mut self, x: usize, y: usize, layer: usize, renderable: Glyph<'a>) {
         self.contents[x][y][layer] = Some(renderable);
+        self.dirties.push((x, y));
     }
 
     fn get(&self, x: usize, y: usize, layer: usize) -> &Option<Glyph<'a>> {
@@ -130,10 +167,18 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
 
     fn get_all(&self) -> Vec<&Option<Glyph<'a>>> {
         let mut v = Vec::new();
+        for (x, y, l) in self.get_points() {
+            v.push(&self.contents[x][y][l]);
+        }
+        v
+    }
+
+    fn get_points(&self) -> Vec<(usize, usize, usize)> {
+        let mut v = Vec::new();
         for x in 0..self.size.0 {
             for y in 0..self.size.1 {
                 for l in 0..self.size.2 {
-                    v.push(&self.contents[x][y][l]);
+                    v.push((x, y, l));
                 }
             }
         }
@@ -141,36 +186,31 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
     }
 
     fn clear(&mut self) {
-        for column in self.contents.iter_mut() {
-            for row in column {
-                for layer in row {
-                    *layer = None
-                }
+        for (x, y) in self.get_points_2d() {
+            for l in 0..self.size.2 {
+                self.contents[x][y][l] = None;
             }
+            self.dirties.push((x, y));
         }
     }
 
-    fn render(&self) {
-        let start = Instant::now();
+    fn render(&mut self) {
+        //let start = Instant::now();
         // create frame
         let mut target = self.display.draw();
-        target.clear_color(0.0, 1.0, 1.0, 1.0);
-
-        // build Vec<(Glyph, Vertices, layer)>
 
         let mut v: Vec<(&Glyph, [Vertex; 4], usize)> = Vec::new();
-        for x in 0..self.size.0 {
-            for y in 0..self.size.1 {
-                for l in 0..self.size.2 {
-                    if let Some(g) = self.get(x, y, l) {
-                        let verts = [
-                            Vertex::from_cell(x, y + 1, self.size.0, self.size.1, [0.0, 1.0]),
-                            Vertex::from_cell(x + 1, y + 1, self.size.0, self.size.1, [1.0, 1.0]),
-                            Vertex::from_cell(x, y, self.size.0, self.size.1, [0.0, 0.0]),
-                            Vertex::from_cell(x + 1, y, self.size.0, self.size.1, [1.0, 0.0]),
-                        ];
-                        v.push((g, verts, l));
-                    }
+        // double buffered, so we need changes for both this frame and last frame
+        for (x, y) in self.dirties.iter().chain(self.old_dirties.iter()) {
+            for l in 0..self.size.2 {
+                if let Some(g) = self.get(*x, *y, l) {
+                    let verts = [
+                        Vertex::from_cell(*x, y + 1, self.size.0, self.size.1, [0.0, 1.0]),
+                        Vertex::from_cell(x + 1, y + 1, self.size.0, self.size.1, [1.0, 1.0]),
+                        Vertex::from_cell(*x, *y, self.size.0, self.size.1, [0.0, 0.0]),
+                        Vertex::from_cell(x + 1, *y, self.size.0, self.size.1, [1.0, 0.0]),
+                    ];
+                    v.push((g, verts, l));
                 }
             }
         }
@@ -202,7 +242,9 @@ impl<'a> Renderer<Glyph<'a>> for Terminal<'a> {
 
         target.finish().unwrap();
 
-        println!("{:?}", start.elapsed());
+        //println!("{:?}", start.elapsed());
+
+        self.clear_dirties();
     }
 }
 
@@ -216,9 +258,11 @@ pub trait Renderer<R: Renderable> {
 
     fn get_all(&self) -> Vec<&Option<R>>;
 
+    fn get_points(&self) -> Vec<(usize, usize, usize)>;
+
     fn clear(&mut self);
 
-    fn render(&self);
+    fn render(&mut self);
 }
 
 pub trait Renderable {

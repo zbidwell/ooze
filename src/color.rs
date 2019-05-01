@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub const WHITE: Color = Color { r: NormFloat(1.0), g: NormFloat(1.0), b: NormFloat(1.0), a: NormFloat(1.0)};
 pub const BLACK: Color = Color { r: NormFloat(0.0), g: NormFloat(0.0), b: NormFloat(0.0), a: NormFloat(1.0)};
 pub const CLEAR: Color = Color { r: NormFloat(0.0), g: NormFloat(0.0), b: NormFloat(0.0), a: NormFloat(0.0)};
@@ -44,9 +46,22 @@ impl<F: Into<NormFloat> + Copy> From<[F; 3]> for Color {
     }
 }
 
+impl fmt::Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Color({}, {}, {}, {})", self.r.as_f32(), self.g.as_f32(), self.b.as_f32(), self.a.as_f32())
+    }
+}
+
 /// A float bounded to the range [0.0, 1.0]
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub struct NormFloat(f32);
+
+impl NormFloat {
+    pub fn as_f32(self) -> f32 {
+        let NormFloat(f) = self;
+        f
+    }
+}
 
 impl From<f32> for NormFloat {
     fn from(f: f32) -> NormFloat {
@@ -72,6 +87,6 @@ impl From<NormFloat> for f32 {
 impl From<NormFloat> for f64 {
     fn from(f: NormFloat) -> f64 {
         let NormFloat(val) = f;
-        val as f64
+        val.into()
     }
 }

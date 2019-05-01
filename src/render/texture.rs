@@ -53,7 +53,7 @@ impl GenericTextureLibrary<char> for TextureLibrary {
         let font = Font::from_bytes(font_data as &[u8])
             .expect("Could not create font from bytes");
     
-        let (g_height, g_width) = self.size;
+        let (g_width, g_height) = self.size;
 
         let scale = Scale::uniform(g_height as f32);
 
@@ -82,10 +82,7 @@ impl GenericTextureLibrary<char> for TextureLibrary {
     }
 
     fn is_built(&self, id: char) -> bool {
-        match self.map.get(&id) {
-            Some(_) => false,
-            None => true,
-        }
+        self.map.get(&id).is_none()
     }
 }
 
