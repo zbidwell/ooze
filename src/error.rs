@@ -11,7 +11,7 @@ use glium;
 use toml;
 
 
-pub type OozeResult<T> = Result<T, Box<Error>>;
+pub type OozeResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub enum OozeError {

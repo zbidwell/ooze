@@ -114,7 +114,7 @@ impl SpriteMap {
     }
 
     /// Get the sprite with the given id from this SpriteMap.
-    pub fn get(&self, id: &String) -> OozeResult<&Sprite> {
+    pub fn get(&self, id: &str) -> OozeResult<&Sprite> {
         Ok(self.sprite_map.get(id).ok_or(OozeError::GenericError)?)
     }
 

@@ -14,7 +14,7 @@ impl Point {
     }
 
     /// Calculate the vertices for a quad on the screen, returns as [top-left, top-right, bottom-left, bottom-right] where self is at bottom-left.
-    pub fn screen_verts(&self, terminal_dims: Dimensions) -> [Vertex; 4] {
+    pub fn screen_verts(self, terminal_dims: Dimensions) -> [Vertex; 4] {
         [
             Vertex::from_arrays(self.plus(Point::new(0, 1)).to_screen(terminal_dims), [0.0, 1.0]),
             Vertex::from_arrays(self.plus(Point::new(1, 1)).to_screen(terminal_dims), [1.0, 1.0]),
@@ -24,7 +24,7 @@ impl Point {
     }
 
     /// Converts "terminal" coordinates to OpenGL screen coordinates. (i.e. from [0, terminal_size - 1] integer space to [-1, 1] float space)
-    pub fn to_screen(&self, terminal_dims: Dimensions) -> [f32; 2] {
+    pub fn to_screen(self, terminal_dims: Dimensions) -> [f32; 2] {
         [
             2.0 * ((self.x as f32) / terminal_dims.term_size.x as f32) - 1.0,
             2.0 * ((self.y as f32) / terminal_dims.term_size.y as f32) - 1.0
@@ -32,7 +32,7 @@ impl Point {
     }
 
     /// Adds points like vectors and returns a new point
-    pub fn plus(&self, other: Point) -> Point {
+    pub fn plus(self, other: Point) -> Point {
         // TODO: overload add?
         Point {
             x: self.x + other.x,
@@ -114,32 +114,32 @@ impl Dimensions {
     }
 
     /// Return the Rect that these dimensions would cover on a parent's Rect.
-    pub fn rect(&self) -> Rect {
+    pub fn rect(self) -> Rect {
         Rect::new(self.offset, self.term_size)
     }
 
     /// Make a copy of these Dimensions with the same glyph_size, but new term_size and offset.
-    pub fn copy_for_panel(&self, term_size: Point, offset: Point) -> Dimensions {
-        self.clone().with_term_size(term_size).with_offset(offset)
+    pub fn copy_for_panel(self, term_size: Point, offset: Point) -> Dimensions {
+        self.with_term_size(term_size).with_offset(offset)
     }
 
     /// Return a new Dimensions with a changed glyph_size.
-    pub fn with_glyph_size(&self, glyph_size: Point) -> Dimensions {
-        let mut new = self.clone();
+    pub fn with_glyph_size(self, glyph_size: Point) -> Dimensions {
+        let mut new = self; // copy inner value
         new.glyph_size = glyph_size;
         new
     }
 
     /// Return a new Dimensions with a changed term_size.
-    pub fn with_term_size(&self, term_size: Point) -> Dimensions {
-        let mut new = self.clone();
+    pub fn with_term_size(self, term_size: Point) -> Dimensions {
+        let mut new = self; // copy inner value
         new.term_size = term_size;
         new
     }
 
     /// Return a new Dimensions with a changed offset.
-    pub fn with_offset(&self, offset: Point) -> Dimensions {
-        let mut new = self.clone();
+    pub fn with_offset(self, offset: Point) -> Dimensions {
+        let mut new = self;
         new.offset = offset;
         new
     }

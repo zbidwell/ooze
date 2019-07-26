@@ -38,7 +38,8 @@ impl Glyph {
     /// Check if the alpha value of the background color is 1.0.
     // use by drawing functions to see if this hides lower glyphs
     pub fn is_opaque(&self) -> bool {
-        self.bg_color[3] == 1.0
+        // clippy complains if we compare directly against 1.0
+        (self.bg_color[3] - 1.0).abs() < 0.000_001
     }
 
     /// check if both foreground and background colors are fully transparent
