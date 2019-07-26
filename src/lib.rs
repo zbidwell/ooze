@@ -1,5 +1,5 @@
-pub mod error;
 pub mod app;
+pub mod error;
 pub mod geometry;
 pub mod graphics;
 pub mod terminal;

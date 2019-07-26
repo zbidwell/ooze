@@ -1,5 +1,5 @@
-mod sprite;
 mod render;
+mod sprite;
 
-pub use sprite::*;
 pub use render::*;
+pub use sprite::*;

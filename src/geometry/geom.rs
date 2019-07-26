@@ -16,10 +16,19 @@ impl Point {
     /// Calculate the vertices for a quad on the screen, returns as [top-left, top-right, bottom-left, bottom-right] where self is at bottom-left.
     pub fn screen_verts(self, terminal_dims: Dimensions) -> [Vertex; 4] {
         [
-            Vertex::from_arrays(self.plus(Point::new(0, 1)).to_screen(terminal_dims), [0.0, 1.0]),
-            Vertex::from_arrays(self.plus(Point::new(1, 1)).to_screen(terminal_dims), [1.0, 1.0]),
+            Vertex::from_arrays(
+                self.plus(Point::new(0, 1)).to_screen(terminal_dims),
+                [0.0, 1.0],
+            ),
+            Vertex::from_arrays(
+                self.plus(Point::new(1, 1)).to_screen(terminal_dims),
+                [1.0, 1.0],
+            ),
             Vertex::from_arrays(self.to_screen(terminal_dims), [0.0, 0.0]),
-            Vertex::from_arrays(self.plus(Point::new(1, 0)).to_screen(terminal_dims), [1.0, 0.0]),
+            Vertex::from_arrays(
+                self.plus(Point::new(1, 0)).to_screen(terminal_dims),
+                [1.0, 0.0],
+            ),
         ]
     }
 
@@ -27,7 +36,7 @@ impl Point {
     pub fn to_screen(self, terminal_dims: Dimensions) -> [f32; 2] {
         [
             2.0 * ((self.x as f32) / terminal_dims.term_size.x as f32) - 1.0,
-            2.0 * ((self.y as f32) / terminal_dims.term_size.y as f32) - 1.0
+            2.0 * ((self.y as f32) / terminal_dims.term_size.y as f32) - 1.0,
         ]
     }
 
@@ -62,8 +71,8 @@ impl Rect {
     /// Return a Vector of all the Points contained in this Rect.
     pub fn points(&self) -> Vec<Point> {
         let mut result = Vec::with_capacity((self.size.x * self.size.y) as usize);
-        for x in self.bottom_left.x..self.bottom_left.x+self.size.x {
-            for y in self.bottom_left.y..self.bottom_left.y+self.size.y {
+        for x in self.bottom_left.x..self.bottom_left.x + self.size.x {
+            for y in self.bottom_left.y..self.bottom_left.y + self.size.y {
                 result.push(Point::new(x, y));
             }
         }
@@ -72,16 +81,18 @@ impl Rect {
 
     /// Check if the given Point is contained within this Rect.
     pub fn contains_point(&self, point: Point) -> bool {
-        point.x >= self.bottom_left.x &&
-        point.x < self.bottom_left.x + self.size.x &&
-        point.y >= self.bottom_left.y &&
-        point.y < self.bottom_left.y + self.size.y
+        point.x >= self.bottom_left.x
+            && point.x < self.bottom_left.x + self.size.x
+            && point.y >= self.bottom_left.y
+            && point.y < self.bottom_left.y + self.size.y
     }
 
     /// Check if a given Rect is fully contained inside this Rect.
     pub fn contains_rect(&self, rect: Rect) -> bool {
         let bl = rect.bottom_left;
-        let tr = rect.bottom_left.plus(Point::new(rect.size.x - 1, rect.size.y - 1));
+        let tr = rect
+            .bottom_left
+            .plus(Point::new(rect.size.x - 1, rect.size.y - 1));
         self.contains_point(bl) && self.contains_point(tr)
     }
 }
@@ -96,7 +107,14 @@ pub struct Dimensions {
 
 impl Dimensions {
     /// Create a new Dimensions from simple values.
-    pub fn new(glyph_width: u32, glyph_height: u32, term_width: u32, term_height: u32, offset_x: u32, offset_y: u32) -> Dimensions {
+    pub fn new(
+        glyph_width: u32,
+        glyph_height: u32,
+        term_width: u32,
+        term_height: u32,
+        offset_x: u32,
+        offset_y: u32,
+    ) -> Dimensions {
         Dimensions {
             glyph_size: Point::new(glyph_width, glyph_height),
             term_size: Point::new(term_width, term_height),

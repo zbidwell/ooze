@@ -1,11 +1,11 @@
-use crate::error::{OozeResult, OozeError};
-use crate::terminal::{Glyph};
+use crate::error::{OozeError, OozeResult};
 use crate::geometry::{Dimensions, Point, Rect};
-use crate::graphics::{SpriteMap};
-use glium::{Frame, Program, Surface, Blend};
+use crate::graphics::SpriteMap;
+use crate::terminal::Glyph;
 use glium::backend::glutin::Display;
-use glium::uniforms::Sampler;
 use glium::uniforms::MagnifySamplerFilter::Nearest;
+use glium::uniforms::Sampler;
+use glium::{Blend, Frame, Program, Surface};
 
 /// The root object representing what is drawn to the screen.
 pub struct Terminal {
@@ -24,12 +24,18 @@ impl Terminal {
     }
 
     /// Collects the glyphs from alll this terminal's sub-panels and draws them to the screen ordered by layer.
-    pub fn draw(&self, target: &mut Frame, display: &Display, program: &Program, sprites: &SpriteMap) -> OozeResult<()> {
+    pub fn draw(
+        &self,
+        target: &mut Frame,
+        display: &Display,
+        program: &Program,
+        sprites: &SpriteMap,
+    ) -> OozeResult<()> {
         let glyph_tuples = self.collect_drawable_glyphs();
 
         let params = glium::DrawParameters {
             blend: Blend::alpha_blending(),
-            .. Default::default()
+            ..Default::default()
         };
 
         for (glyph, point, _layer) in glyph_tuples {
@@ -65,12 +71,11 @@ impl Terminal {
                     }
                 }
             }
-        };
+        }
         result.sort_by_key(|(_, _, layer)| *layer);
         result
     }
 }
-
 
 /// A sort of "sub terminal" that contains glyphs for drawing to the screen. Can contain sub-panels.
 pub struct Panel {
@@ -97,12 +102,15 @@ impl Panel {
                 for x in 0..dims.term_size.x {
                     outer.push(Vec::with_capacity(dims.term_size.y as usize));
                     for y in 0..dims.term_size.y {
-                        outer[x as usize].push(Glyph::new(
-                            Point::new(x, y),
-                            [1.0, 1.0, 1.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0],
-                            "empty".to_string(),
-                        ).unwrap());
+                        outer[x as usize].push(
+                            Glyph::new(
+                                Point::new(x, y),
+                                [1.0, 1.0, 1.0, 0.0],
+                                [0.0, 0.0, 0.0, 0.0],
+                                "empty".to_string(),
+                            )
+                            .unwrap(),
+                        );
                     }
                 }
                 outer
@@ -134,9 +142,9 @@ impl Panel {
     /// Updates the given Panel's offset and sets its layer to this Panel's layer + 1.
     pub fn add_sub_panel(&mut self, mut panel: Panel) -> OozeResult<()> {
         if !self.rect().contains_rect(panel.dims.rect()) {
-            return Err(Box::new(OozeError::OutOfBoundsError))
+            return Err(Box::new(OozeError::OutOfBoundsError));
         }
-        
+
         panel.dims.offset = panel.dims.offset.plus(self.dims.offset);
         panel.layer = self.layer + 1;
 
@@ -148,7 +156,7 @@ impl Panel {
     /// Set the Glyph at the given Point.
     pub fn set(&mut self, point: Point, glyph: Glyph) -> OozeResult<()> {
         if !self.rect().contains_point(point) {
-            return Err(Box::new(OozeError::OutOfBoundsError))
+            return Err(Box::new(OozeError::OutOfBoundsError));
         }
         self.contents[point.x as usize][point.y as usize] = glyph;
 
@@ -158,7 +166,7 @@ impl Panel {
     /// get a reference to the Glyph at the given Point.
     pub fn get(&self, point: Point) -> OozeResult<&Glyph> {
         if !self.rect().contains_point(point) {
-            return Err(Box::new(OozeError::OutOfBoundsError))
+            return Err(Box::new(OozeError::OutOfBoundsError));
         }
 
         Ok(&self.contents[point.x as usize][point.y as usize])
@@ -177,14 +185,16 @@ impl Panel {
     }
 
     /// Place a Glyph with the given info.
-    pub fn place(&mut self, x: u32, y: u32, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
+    pub fn place(
+        &mut self,
+        x: u32,
+        y: u32,
+        id: &str,
+        fg_color: [f32; 4],
+        bg_color: [f32; 4],
+    ) -> OozeResult<()> {
         let point = Point::new(x, y);
-        let glyph = Glyph::new(
-            point,
-            fg_color,
-            bg_color,
-            id.to_string(),
-        )?;
+        let glyph = Glyph::new(point, fg_color, bg_color, id.to_string())?;
 
         self.set(point, glyph)?;
 
@@ -192,9 +202,18 @@ impl Panel {
     }
 
     /// Make a border of Glyphs with the given info on this Panel.
-    pub fn make_border(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
+    pub fn make_border(
+        &mut self,
+        id: &str,
+        fg_color: [f32; 4],
+        bg_color: [f32; 4],
+    ) -> OozeResult<()> {
         for point in self.rect().points() {
-            if point.x == 0 || point.x == self.rect().size.x - 1 || point.y == 0 || point.y == self.rect().size.y - 1 {
+            if point.x == 0
+                || point.x == self.rect().size.x - 1
+                || point.y == 0
+                || point.y == self.rect().size.y - 1
+            {
                 self.place(point.x, point.y, id, fg_color, bg_color)?;
             }
         }
@@ -203,7 +222,12 @@ impl Panel {
     }
 
     /// Fill the Panel with Glyphs with the given info.
-    pub fn fill_with(&mut self, id: &str, fg_color: [f32; 4], bg_color: [f32; 4]) -> OozeResult<()> {
+    pub fn fill_with(
+        &mut self,
+        id: &str,
+        fg_color: [f32; 4],
+        bg_color: [f32; 4],
+    ) -> OozeResult<()> {
         for point in self.rect().points() {
             self.place(point.x, point.y, id, fg_color, bg_color)?;
         }
@@ -211,9 +235,10 @@ impl Panel {
         Ok(())
     }
 
-    /// Returns a Vector of references to all the glyphs in this Panel. 
+    /// Returns a Vector of references to all the glyphs in this Panel.
     pub fn glyphs(&self) -> Vec<&Glyph> {
-        let mut result = Vec::with_capacity((self.dims.term_size.x * self.dims.term_size.y) as usize);
+        let mut result =
+            Vec::with_capacity((self.dims.term_size.x * self.dims.term_size.y) as usize);
         for column in &self.contents {
             for glyph in column {
                 result.push(glyph);
@@ -228,7 +253,7 @@ impl Panel {
         result.push(&self);
         for panel in &self.sub_panels {
             result.extend(panel.all_sub_panels().iter());
-        };
+        }
         result
     }
 }

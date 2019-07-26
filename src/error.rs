@@ -10,7 +10,6 @@ use glium;
 
 use toml;
 
-
 pub type OozeResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
@@ -96,4 +95,3 @@ impl From<glium::backend::glutin::DisplayCreationError> for OozeError {
         OozeError::DisplayCreationError(err)
     }
 }
-

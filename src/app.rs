@@ -6,10 +6,10 @@ use glium;
 use glium::glutin;
 use glium::Surface;
 
-use crate::error::{OozeResult};
-use crate::geometry::{Dimensions};
-use crate::graphics::{SpriteMap, get_shader};
-use crate::terminal::{Terminal};
+use crate::error::OozeResult;
+use crate::geometry::Dimensions;
+use crate::graphics::{get_shader, SpriteMap};
+use crate::terminal::Terminal;
 
 /// This should be implemented by the user's main Game or GameState struct.
 pub trait GameState {
@@ -35,22 +35,33 @@ pub struct App<G: GameState> {
 
 impl<G: GameState> App<G> {
     /// Create a new App.
-    pub fn new(dims: Dimensions, scale: f32, title: &str, sprite_sheet_path: &Path) -> OozeResult<App<G>> {
-        let (events_loop, display) =
-            init_window(
-                (dims.glyph_size.x as f32 * dims.term_size.x as f32 * scale) as usize,
-                (dims.glyph_size.y as f32 * dims.term_size.y as f32 * scale) as usize,
-                title
-            )?;
+    pub fn new(
+        dims: Dimensions,
+        scale: f32,
+        title: &str,
+        sprite_sheet_path: &Path,
+    ) -> OozeResult<App<G>> {
+        let (events_loop, display) = init_window(
+            (dims.glyph_size.x as f32 * dims.term_size.x as f32 * scale) as usize,
+            (dims.glyph_size.y as f32 * dims.term_size.y as f32 * scale) as usize,
+            title,
+        )?;
 
         let terminal = Terminal::new(dims);
 
         let program = glium::Program::from_source(
             &display,
-            get_shader(Path::new(r#"resources\shaders\vertex\v_shader_default.vert"#))?.as_str(),
-            get_shader(Path::new(r#"resources\shaders\fragment\f_shader_default.frag"#))?.as_str(),
-            None
-        ).expect("Failed while creating shader program");
+            get_shader(Path::new(
+                r#"resources\shaders\vertex\v_shader_default.vert"#,
+            ))?
+            .as_str(),
+            get_shader(Path::new(
+                r#"resources\shaders\fragment\f_shader_default.frag"#,
+            ))?
+            .as_str(),
+            None,
+        )
+        .expect("Failed while creating shader program");
 
         let sprites = SpriteMap::from_sheet(&display, sprite_sheet_path)?;
 
@@ -83,7 +94,8 @@ impl<G: GameState> App<G> {
 
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        self.terminal.draw(&mut target, &self.display, &self.program, &self.sprites)?;
+        self.terminal
+            .draw(&mut target, &self.display, &self.program, &self.sprites)?;
 
         target.finish().unwrap();
 
@@ -118,24 +130,24 @@ fn default_handle_events_callback<G: GameState>(app: &mut App<G>, _game_state: &
     app.events_loop.poll_events(|ev| events.push(ev));
 
     for event in events {
-        if let glutin::Event::WindowEvent { event: window_event, ..} = event {
+        if let glutin::Event::WindowEvent {
+            event: window_event,
+            ..
+        } = event
+        {
             if let glutin::WindowEvent::CloseRequested = window_event {
                 app.closed = true;
             }
         }
-
-        // match event {
-        //     glutin::Event::WindowEvent { event, .. } => match event {
-        //     glutin::WindowEvent::CloseRequested => app.closed = true,
-        //     _ => (),
-        // },
-        // _ => (),
-        // }
     }
 }
 
 /// Creates and returns an event loop and a display, which manages window and OpenGL context
-fn init_window(width: usize, height: usize, title: &str) -> OozeResult<(glutin::EventsLoop, glium::Display)> {
+fn init_window(
+    width: usize,
+    height: usize,
+    title: &str,
+) -> OozeResult<(glutin::EventsLoop, glium::Display)> {
     let size = glutin::dpi::LogicalSize::new(width as f64, height as f64);
 
     let events_loop = glutin::EventsLoop::new();

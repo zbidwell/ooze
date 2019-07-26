@@ -1,5 +1,5 @@
-use crate::error::{OozeResult, OozeError};
-use crate::geometry::{Point};
+use crate::error::{OozeError, OozeResult};
+use crate::geometry::Point;
 
 /// A glyph (letter, symbol, tile, etc.) on the screen that contains a location in terminal space, foreground and background colors, and an id to access a sprite.
 #[derive(Clone, Debug, PartialEq)]
@@ -13,18 +13,23 @@ pub struct Glyph {
 
 impl Glyph {
     /// Create a new Glyph
-    pub fn new(location: Point, fg_color: [f32; 4], bg_color: [f32; 4], sprite_id: String) -> OozeResult<Glyph> {
+    pub fn new(
+        location: Point,
+        fg_color: [f32; 4],
+        bg_color: [f32; 4],
+        sprite_id: String,
+    ) -> OozeResult<Glyph> {
         for c in &fg_color {
             if *c < 0.0 || *c > 1.0 {
-                return Err(Box::new(OozeError::BadColorError(fg_color)))
+                return Err(Box::new(OozeError::BadColorError(fg_color)));
             }
         }
         for c in &bg_color {
             if *c < 0.0 || *c > 1.0 {
-                return Err(Box::new(OozeError::BadColorError(bg_color)))
+                return Err(Box::new(OozeError::BadColorError(bg_color)));
             }
         }
-        
+
         let glyph = Glyph {
             location,
             fg_color,
@@ -48,4 +53,3 @@ impl Glyph {
         self.bg_color[3] == 0.0 && self.fg_color[3] == 0.0
     }
 }
-
